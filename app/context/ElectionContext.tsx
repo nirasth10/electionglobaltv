@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { useSocket } from './SocketContext';
 
 export interface ICandidate {
@@ -43,7 +43,8 @@ export const ElectionProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [regions, setRegions] = useState<IElectionRegion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { socket } = useSocket();
+  const { socket, socketUnavailable } = useSocket();
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const currentRegion = regions.find((r) => r.isCurrentDisplay) ?? regions[0] ?? null;
 
@@ -75,7 +76,8 @@ export const ElectionProvider: React.FC<{ children: ReactNode }> = ({ children }
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error('Failed to create region');
-  }, []);
+    await refreshRegions();
+  }, [refreshRegions]);
 
   const updateRegion = useCallback(async (id: string, data: Partial<IElectionRegion>) => {
     const res = await fetch(`/api/regions/${id}`, {
@@ -84,12 +86,14 @@ export const ElectionProvider: React.FC<{ children: ReactNode }> = ({ children }
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error('Failed to update region');
-  }, []);
+    await refreshRegions();
+  }, [refreshRegions]);
 
   const deleteRegion = useCallback(async (id: string) => {
     const res = await fetch(`/api/regions/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Failed to delete region');
-  }, []);
+    await refreshRegions();
+  }, [refreshRegions]);
 
   const setDisplayRegion = useCallback(async (id: string) => {
     await updateRegion(id, { isCurrentDisplay: true });
@@ -100,13 +104,20 @@ export const ElectionProvider: React.FC<{ children: ReactNode }> = ({ children }
     refreshRegions();
   }, [refreshRegions]);
 
-  // Real-time socket updates
+  // Socket.IO — instant push (works on local dev with server.js)
   useEffect(() => {
     if (!socket) return;
     const handler = (data: IElectionRegion[]) => setRegions(data);
     socket.on('regions:updated', handler);
     return () => { socket.off('regions:updated', handler); };
   }, [socket]);
+
+  // Polling fallback — kicks in when Socket.IO is unavailable (Vercel serverless)
+  useEffect(() => {
+    if (!socketUnavailable) return;
+    pollRef.current = setInterval(refreshRegions, 3000);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, [socketUnavailable, refreshRegions]);
 
   return (
     <ElectionContext.Provider value={{

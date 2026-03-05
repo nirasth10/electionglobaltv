@@ -3,144 +3,423 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
-import { DEMO_CREDENTIALS } from '@/app/lib/auth';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login, isLoading, error, isAuthenticated } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState('');
+  const [focused, setFocused] = useState<'email' | 'password' | null>(null);
 
-  // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/');
-    }
+    if (isAuthenticated) router.push('/');
   }, [isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError('');
-
     if (!email || !password) {
       setLocalError('Please fill in all fields');
       return;
     }
-
     const success = await login({ email, password });
-    if (success) {
-      router.push('/');
-    }
+    if (success) router.push('/');
   };
 
-  const handleDemoLogin = (credentials: typeof DEMO_CREDENTIALS[0]) => {
-    setEmail(credentials.email);
-    setPassword(credentials.password);
-  };
+  const displayError = error || localError;
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center px-4 py-12 bg-gradient-to-br from-[#060c18] via-slate-900 to-black">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="text-5xl font-black text-white mb-2 mukta-extrabold">
-            ⚡ ELECTION
-          </div>
-          <p className="text-blue-400 text-lg font-semibold mukta-semibold">Global TV Khabar 2026</p>
-          <p className="text-slate-400 text-sm mt-2">Nepal Election Live Tracking System</p>
+    <div className="login-root">
+      {/* Subtle background grid */}
+      <div className="login-bg-grid" />
+
+      <div className="login-wrapper">
+
+        {/* Logo area */}
+        <div className="login-logo-area">
+          {/* TV / Broadcast icon from Flaticon (inline SVG) */}
+
+          <p className="login-subtitle">Admin Control Panel</p>
         </div>
 
-        {/* Login Card */}
-        <div className="bg-[#0a1120]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-8">
+        {/* Card */}
+        <div className="login-card">
+          <h2 className="login-card-title">Sign in to continue</h2>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email Input */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-bold text-slate-300 mb-2 mukta-bold">
-                Email Address
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@electionglobal.com"
-                className="w-full px-4 py-3 bg-white/[0.05] border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:bg-white/[0.08] transition"
-              />
+          <form onSubmit={handleSubmit} className="login-form">
+
+            {/* Email field */}
+            <div className={`login-field ${focused === 'email' ? 'focused' : ''}`}>
+              <label htmlFor="email">Email</label>
+              <div className="login-input-wrap">
+                {/* Email icon (Flaticon style inline SVG) */}
+                <svg className="login-field-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                  <path d="M28 6H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h24a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zm-1.54 2L16 14.77 5.54 8zM4 24V9.23l11.37 7.58a1 1 0 0 0 1.26 0L28 9.23V24z" />
+                </svg>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  onFocus={() => setFocused('email')}
+                  onBlur={() => setFocused(null)}
+                  placeholder="your@email.com"
+                  autoComplete="email"
+                />
+              </div>
             </div>
 
-            {/* Password Input */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-bold text-slate-300 mb-2 mukta-bold">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-4 py-3 bg-white/[0.05] border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:bg-white/[0.08] transition"
-              />
+            {/* Password field */}
+            <div className={`login-field ${focused === 'password' ? 'focused' : ''}`}>
+              <label htmlFor="password">Password</label>
+              <div className="login-input-wrap">
+                {/* Lock icon (Flaticon style inline SVG) */}
+                <svg className="login-field-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                  <path d="M24 14h-1v-3a7 7 0 0 0-14 0v3H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V16a2 2 0 0 0-2-2zm-9 7.72V24a1 1 0 0 0 2 0v-2.28A2 2 0 0 0 16 18a2 2 0 0 0-1 3.72zM20 14H12v-3a4 4 0 0 1 8 0z" />
+                </svg>
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  onFocus={() => setFocused('password')}
+                  onBlur={() => setFocused(null)}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                />
+                {/* Eye toggle icon */}
+                <button
+                  type="button"
+                  className="login-eye-btn"
+                  onClick={() => setShowPassword(v => !v)}
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    // Eye-off icon
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                      <path d="m4.71 3.29-1.42 1.42 4.1 4.1A14.25 14.25 0 0 0 2 16c2.73 5.56 8.27 9 14 9a13.9 13.9 0 0 0 6.31-1.51l4 4 1.42-1.42zm8.45 8.45 5.1 5.1A3 3 0 0 1 13.16 11.74zM16 23c-4.68 0-9.3-2.86-11.72-7a12.26 12.26 0 0 1 4.89-5L11.34 13A5 5 0 0 0 21 16v-.34l3 3A11.8 11.8 0 0 1 16 23zm14-7a14 14 0 0 1-2.14 4l-1.42-1.43A11.84 11.84 0 0 0 27.72 16C25.3 11.86 20.68 9 16 9a12.11 12.11 0 0 0-3.2.44L11.1 7.75A14 14 0 0 1 16 7c5.73 0 11.27 3.44 14 9z" />
+                    </svg>
+                  ) : (
+                    // Eye icon
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                      <path d="M16 7C10.27 7 4.73 10.44 2 16c2.73 5.56 8.27 9 14 9s11.27-3.44 14-9c-2.73-5.56-8.27-9-14-9zm0 15a6 6 0 1 1 6-6 6 6 0 0 1-6 6zm0-10a4 4 0 1 0 4 4 4 4 0 0 0-4-4z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
 
-            {/* Error Messages */}
-            {(error || localError) && (
-              <div className="p-3 bg-red-600/20 border border-red-600/50 rounded-lg">
-                <p className="text-red-400 text-sm font-semibold mukta-semibold">
-                  {error || localError}
-                </p>
+            {/* Error */}
+            {displayError && (
+              <div className="login-error">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                  <path d="M16 2a14 14 0 1 0 14 14A14 14 0 0 0 16 2zm1 21h-2v-2h2zm0-4h-2V9h2z" />
+                </svg>
+                <span>{displayError}</span>
               </div>
             )}
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-bold rounded-lg transition duration-200 flex items-center justify-center gap-2 mukta-bold"
-            >
+            {/* Submit */}
+            <button type="submit" disabled={isLoading} className="login-btn">
               {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Logging in...
-                </>
+                <span className="login-spinner" />
               ) : (
-                '🔐 Login'
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                    <path d="M26.71 16.29 20 9.59V14H6v4h14v4.41l6.71-6.12z" />
+                  </svg>
+                  Sign In
+                </>
               )}
             </button>
           </form>
-
-          {/* Demo Credentials Section */}
-          <div className="mt-8 pt-6 border-t border-white/10">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 mukta-bold text-center">
-              📝 Demo Credentials
-            </p>
-            <div className="space-y-2">
-              {DEMO_CREDENTIALS.map((cred, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleDemoLogin(cred)}
-                  className="w-full p-3 bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 rounded-lg transition group text-left"
-                >
-                  <p className="text-sm font-bold text-white group-hover:text-blue-300 transition mukta-bold">
-                    {cred.role === 'admin' ? '👨‍💼' : '👁️'} {cred.name}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">{cred.email} / {cred.password}</p>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-8">
-          <p className="text-slate-500 text-xs mukta-semibold">
-            <span className="animate-pulse">🔴</span> Live Election Tracking System
-          </p>
-        </div>
+
       </div>
+
+      <style>{`
+        .login-root {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #0b0f1a;
+          padding: 24px 16px;
+          position: relative;
+          overflow: hidden;
+          font-family: 'Inter', 'Segoe UI', sans-serif;
+        }
+
+        .login-bg-grid {
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+          background-size: 40px 40px;
+          pointer-events: none;
+        }
+
+        .login-wrapper {
+          width: 100%;
+          max-width: 400px;
+          position: relative;
+          z-index: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0;
+        }
+
+        /* ── Logo ── */
+        .login-logo-area {
+          text-align: center;
+          margin-bottom: 28px;
+        }
+
+        .login-icon-wrap {
+          width: 64px;
+          height: 64px;
+          margin: 0 auto 14px;
+          background: rgba(229,57,53,0.12);
+          border: 1px solid rgba(229,57,53,0.25);
+          border-radius: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 12px;
+        }
+
+        .login-tv-icon {
+          width: 40px;
+          height: 40px;
+        }
+
+        .login-brand {
+          font-size: 20px;
+          font-weight: 700;
+          color: #fff;
+          letter-spacing: -0.3px;
+          margin: 0 0 4px;
+        }
+
+        .login-subtitle {
+          font-size: 12px;
+          color: #64748b;
+          letter-spacing: 0.3px;
+          margin: 0;
+        }
+
+        /* ── Card ── */
+        .login-card {
+          width: 100%;
+          background: #111827;
+          border: 1px solid #1e293b;
+          border-radius: 16px;
+          padding: 28px 28px 32px;
+        }
+
+        .login-card-title {
+          font-size: 15px;
+          font-weight: 600;
+          color: #94a3b8;
+          margin: 0 0 22px;
+          letter-spacing: 0.2px;
+        }
+
+        /* ── Form ── */
+        .login-form {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .login-field {
+          display: flex;
+          flex-direction: column;
+          gap: 7px;
+        }
+
+        .login-field label {
+          font-size: 12px;
+          font-weight: 600;
+          color: #64748b;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+        }
+
+        .login-input-wrap {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+
+        .login-field-icon {
+          position: absolute;
+          left: 13px;
+          width: 16px;
+          height: 16px;
+          fill: #475569;
+          pointer-events: none;
+          transition: fill 0.2s;
+        }
+
+        .login-field.focused .login-field-icon {
+          fill: #e53935;
+        }
+
+        .login-input-wrap input {
+          width: 100%;
+          background: #0f172a;
+          border: 1px solid #1e293b;
+          border-radius: 10px;
+          padding: 11px 42px 11px 40px;
+          color: #f1f5f9;
+          font-size: 14px;
+          outline: none;
+          transition: border-color 0.2s, background 0.2s;
+          font-family: inherit;
+        }
+
+        .login-input-wrap input::placeholder {
+          color: #334155;
+        }
+
+        .login-input-wrap input:focus {
+          border-color: #e53935;
+          background: #0a0f1e;
+        }
+
+        .login-eye-btn {
+          position: absolute;
+          right: 12px;
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 2px;
+          display: flex;
+          align-items: center;
+        }
+
+        .login-eye-btn svg {
+          width: 17px;
+          height: 17px;
+          fill: #475569;
+          transition: fill 0.2s;
+        }
+
+        .login-eye-btn:hover svg {
+          fill: #94a3b8;
+        }
+
+        /* ── Error ── */
+        .login-error {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: rgba(239,68,68,0.08);
+          border: 1px solid rgba(239,68,68,0.2);
+          border-radius: 8px;
+          padding: 10px 12px;
+        }
+
+        .login-error svg {
+          width: 16px;
+          height: 16px;
+          fill: #f87171;
+          flex-shrink: 0;
+        }
+
+        .login-error span {
+          font-size: 13px;
+          color: #f87171;
+          font-weight: 500;
+        }
+
+        /* ── Button ── */
+        .login-btn {
+          width: 100%;
+          background: #e53935;
+          border: none;
+          border-radius: 10px;
+          color: #fff;
+          font-size: 14px;
+          font-weight: 600;
+          padding: 12px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          transition: background 0.2s, transform 0.1s;
+          font-family: inherit;
+          margin-top: 4px;
+          letter-spacing: 0.2px;
+        }
+
+        .login-btn svg {
+          width: 16px;
+          height: 16px;
+          fill: #fff;
+        }
+
+        .login-btn:hover:not(:disabled) {
+          background: #c62828;
+        }
+
+        .login-btn:active:not(:disabled) {
+          transform: scale(0.99);
+        }
+
+        .login-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        /* Spinner */
+        .login-spinner {
+          width: 18px;
+          height: 18px;
+          border: 2px solid rgba(255,255,255,0.25);
+          border-top-color: #fff;
+          border-radius: 50%;
+          animation: spin 0.7s linear infinite;
+          display: inline-block;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        /* ── Footer ── */
+        .login-footer {
+          margin-top: 24px;
+          font-size: 11px;
+          color: #334155;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          letter-spacing: 0.3px;
+        }
+
+        .live-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #e53935;
+          display: inline-block;
+          animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.4; transform: scale(0.8); }
+        }
+      `}</style>
     </div>
   );
 }

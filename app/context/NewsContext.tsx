@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useSocket } from './SocketContext';
 
 export interface INewsItem {
@@ -33,7 +33,8 @@ const NewsContext = createContext<NewsContextType>({
 export function NewsProvider({ children }: { children: React.ReactNode }) {
     const [items, setItems] = useState<INewsItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const { socket } = useSocket();
+    const { socket, socketUnavailable } = useSocket();
+    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const fetchNews = async () => {
         try {
@@ -48,21 +49,29 @@ export function NewsProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    // Initial fetch
     useEffect(() => {
         fetchNews();
+    }, []);
 
-        if (socket) {
-            socket.on('news_updated', () => {
-                fetchNews();
-            });
-        }
-
-        return () => {
-            if (socket) {
-                socket.off('news_updated');
-            }
-        };
+    // Socket.IO — instant push (works on local dev with server.js)
+    useEffect(() => {
+        if (!socket) return;
+        const handler = () => fetchNews();
+        socket.on('news_updated', handler);
+        return () => { socket.off('news_updated', handler); };
     }, [socket]);
+
+    // Polling fallback — kicks in when Socket.IO is unavailable (Vercel serverless)
+    // Polls every 3 seconds so news appears near-instantly after admin adds it
+    useEffect(() => {
+        if (!socketUnavailable) return; // socket is working — no need to poll
+
+        pollRef.current = setInterval(fetchNews, 3000);
+        return () => {
+            if (pollRef.current) clearInterval(pollRef.current);
+        };
+    }, [socketUnavailable]);
 
     const activeItems = items.filter(i => i.isActive).sort((a, b) => a.order - b.order);
 
@@ -73,7 +82,7 @@ export function NewsProvider({ children }: { children: React.ReactNode }) {
             body: JSON.stringify(item),
         });
         if (!res.ok) throw new Error('Failed to create news item');
-        await fetchNews();
+        await fetchNews(); // immediately reflect in dashboard
     };
 
     const updateItem = async (id: string, updates: Partial<INewsItem>) => {
@@ -102,3 +111,4 @@ export function NewsProvider({ children }: { children: React.ReactNode }) {
 }
 
 export const useNews = () => useContext(NewsContext);
+
