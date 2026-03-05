@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useSocket } from './SocketContext';
 
 export interface ITickerItem {
@@ -31,8 +31,7 @@ const TickerContext = createContext<TickerContextType | undefined>(undefined);
 export const TickerProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [items, setItems] = useState<ITickerItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const { socket, socketUnavailable } = useSocket();
-    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const { socket } = useSocket();
 
     const activeItems = items.filter((i) => i.isActive);
 
@@ -83,13 +82,6 @@ export const TickerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         socket.on('ticker:updated', handler);
         return () => { socket.off('ticker:updated', handler); };
     }, [socket]);
-
-    // Polling fallback — kicks in when Socket.IO is unavailable (Vercel serverless)
-    useEffect(() => {
-        if (!socketUnavailable) return;
-        pollRef.current = setInterval(refreshTicker, 3000);
-        return () => { if (pollRef.current) clearInterval(pollRef.current); };
-    }, [socketUnavailable, refreshTicker]);
 
     return (
         <TickerContext.Provider value={{ items, activeItems, isLoading, refreshTicker, createItem, updateItem, deleteItem }}>

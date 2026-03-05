@@ -19,7 +19,7 @@ const ElectionTicker = () => {
         <div className="bg-gradient-to-r from-blue-700 to-blue-900 px-3 sm:px-6 flex flex-col justify-center items-center min-w-[110px] sm:min-w-[170px] border-r border-white/10 shadow-xl flex-shrink-0">
           <p className="text-[8px] sm:text-[10px] font-bold text-white/80 uppercase tracking-[0.2em] leading-none mb-1 mukta-semibold"></p>
           <h1 className="text-sm sm:text-xl font-black text-white leading-tight text-center mukta-extrabold uppercase">
-            Election<br />2083
+            Election<br />2082
           </h1>
         </div>
 

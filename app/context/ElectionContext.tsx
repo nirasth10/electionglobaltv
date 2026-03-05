@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useSocket } from './SocketContext';
 
 export interface ICandidate {
@@ -43,8 +43,7 @@ export const ElectionProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [regions, setRegions] = useState<IElectionRegion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { socket, socketUnavailable } = useSocket();
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const { socket } = useSocket();
 
   const currentRegion = regions.find((r) => r.isCurrentDisplay) ?? regions[0] ?? null;
 
@@ -111,13 +110,6 @@ export const ElectionProvider: React.FC<{ children: ReactNode }> = ({ children }
     socket.on('regions:updated', handler);
     return () => { socket.off('regions:updated', handler); };
   }, [socket]);
-
-  // Polling fallback — kicks in when Socket.IO is unavailable (Vercel serverless)
-  useEffect(() => {
-    if (!socketUnavailable) return;
-    pollRef.current = setInterval(refreshRegions, 3000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [socketUnavailable, refreshRegions]);
 
   return (
     <ElectionContext.Provider value={{
