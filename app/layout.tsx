@@ -36,7 +36,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${mukta.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${mukta.variable} antialiased bg-gradient-to-br from-slate-900 via-slate-800 to-black min-h-screen`}
       >
         {children}
       </body>
