@@ -801,7 +801,8 @@ export default function DashboardPage() {
   const { regions, refreshRegions } = useElection();
   const { items: tickerItems, refreshTicker } = useTicker();
   const { items: newsItems, refreshNews } = useNews();
-  const { connected } = useSocket();
+  const { connected, socketUnavailable } = useSocket();
+  const isLive = connected || socketUnavailable;
   const [tab, setTab] = useState<'widget' | 'ticker' | 'news'>('widget');
   const [reseeding, setReseeding] = useState(false);
 
@@ -849,9 +850,9 @@ export default function DashboardPage() {
 
           <div className="flex items-center gap-3">
             {/* Live status */}
-            <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-[11px] font-bold mukta-bold ${connected ? 'bg-emerald-600/20 border-emerald-500/40 text-emerald-400' : 'bg-red-600/20 border-red-500/40 text-red-400'}`}>
-              {connected ? <Wifi size={11} /> : <WifiOff size={11} />}
-              <span className="hidden sm:inline">{connected ? 'Live Connected' : 'Disconnected'}</span>
+            <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-[11px] font-bold mukta-bold ${isLive ? 'bg-emerald-600/20 border-emerald-500/40 text-emerald-400' : 'bg-red-600/20 border-red-500/40 text-red-400'}`}>
+              {isLive ? <Wifi size={11} /> : <WifiOff size={11} />}
+              <span className="hidden sm:inline">{connected ? 'Live Connected' : socketUnavailable ? 'Live (Polling)' : 'Disconnected'}</span>
             </div>
 
             {/* Reseed 
