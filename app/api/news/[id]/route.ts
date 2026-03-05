@@ -1,15 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import BreakingNews from '@/models/BreakingNews';
 
-export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         await connectDB();
+        const { id } = await params;
         const body = await req.json();
-        const resolvedParams = await params;
 
         const updatedItem = await BreakingNews.findByIdAndUpdate(
-            resolvedParams.id,
+            id,
             { $set: body },
             { new: true }
         );
@@ -29,12 +29,12 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     }
 }
 
-export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         await connectDB();
-        const resolvedParams = await params;
+        const { id } = await params;
 
-        const deletedItem = await BreakingNews.findByIdAndDelete(resolvedParams.id);
+        const deletedItem = await BreakingNews.findByIdAndDelete(id);
 
         if (!deletedItem) {
             return NextResponse.json({ error: 'News not found' }, { status: 404 });
