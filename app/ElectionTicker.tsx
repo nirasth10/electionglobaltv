@@ -57,7 +57,7 @@ const ElectionTicker = () => {
                 )}
                 <div className="flex-1 min-w-0">
                   {/* <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase mukta-semibold">{item.label} {item.region}</p> */}
-                  <h3 className="text-sm sm:text-base font-black text-white mukta-extrabold leading-none group-hover:text-blue-300 transition-colors truncate">
+                  <h3 className="text-sm sm:text-base font-black text-white mukta-extrabold leading-none group-hover:text-blue-300 transition-colors">
                     {item.party}
                   </h3>
                   {/* <span className="text-[9px] sm:text-[10px] font-bold text-emerald-400 mukta-bold">▲ {item.changeVotes}</span> */}
