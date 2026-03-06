@@ -14,7 +14,7 @@ export interface ICandidate {
 export interface IElectionRegion extends Document {
     name: string;
     nepaliName: string;
-    totalCountPercent: number;
+    totalCountPercent: any;
     status: 'active' | 'completed' | 'pending';
     isCurrentDisplay: boolean;
     showWidget?: boolean;
@@ -36,7 +36,7 @@ const ElectionRegionSchema = new Schema<IElectionRegion>(
     {
         name: { type: String, required: true },
         nepaliName: { type: String, required: true },
-        totalCountPercent: { type: Number, default: 0, min: 0, max: 100 },
+        totalCountPercent: { type: Schema.Types.Mixed, default: 0 },
         status: {
             type: String,
             enum: ['active', 'completed', 'pending'],

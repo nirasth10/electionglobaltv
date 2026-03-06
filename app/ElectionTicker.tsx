@@ -12,7 +12,7 @@ const ElectionTicker = () => {
   const hasNews = newsItems.length > 0;
 
   return (
-    <div className="fixed bottom-0 left-0 w-full z-50 font-sans antialiased mukta-regular transition-all duration-500">
+    <div className="fixed bottom-9 sm:bottom-12 left-0 w-full z-40 font-sans antialiased mukta-regular transition-all duration-500">
       <div className="h-[80px] sm:h-[96px] bg-[#0a1120]/95 backdrop-blur-xl border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] flex overflow-hidden">
 
         {/* Branding */}
@@ -24,12 +24,12 @@ const ElectionTicker = () => {
         </div>
 
         {/* Region badge */}
-        {currentRegion && (
+        {/* {currentRegion && (
           <div className="px-3 sm:px-6 flex flex-col justify-center border-r border-white/5 bg-white/[0.02] min-w-[120px] sm:min-w-[200px] flex-shrink-0">
             <p className="text-[9px] sm:text-[11px] font-bold text-blue-400 uppercase tracking-widest mukta-bold">क्षेत्र / REGION</p>
             <h2 className="text-base sm:text-2xl font-black text-white mukta-extrabold truncate">{currentRegion.nepaliName}</h2>
           </div>
-        )}
+        )} */}
 
         {/* Scrolling items */}
         <div className="flex-1 flex items-center overflow-x-auto no-scrollbar gap-2 sm:gap-4 px-3 sm:px-5 bg-gradient-to-r from-transparent via-white/[0.01] to-transparent">
@@ -55,11 +55,11 @@ const ElectionTicker = () => {
                   />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase mukta-semibold">{item.label} • {item.region}</p>
+                  <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase mukta-semibold">{item.label} {item.region}</p>
                   <h3 className="text-sm sm:text-base font-black text-white mukta-extrabold leading-none group-hover:text-blue-300 transition-colors truncate">
                     {item.party}
                   </h3>
-                  <span className="text-[9px] sm:text-[10px] font-bold text-emerald-400 mukta-bold">▲ {item.changeVotes}</span>
+                  {/* <span className="text-[9px] sm:text-[10px] font-bold text-emerald-400 mukta-bold">▲ {item.changeVotes}</span> */}
                 </div>
                 <div className="text-right flex-shrink-0">
                   <div className="text-base sm:text-lg font-black text-white tabular-nums tracking-tighter mukta-extrabold leading-none">

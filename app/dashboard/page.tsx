@@ -114,7 +114,7 @@ function WidgetTab() {
   }, [regions, selectedId]);
 
   // Region form state
-  const [rForm, setRForm] = useState({ name: '', nepaliName: '', totalCountPercent: 0, showWidget: true, status: 'active' as 'active' | 'completed' | 'pending' });
+  const [rForm, setRForm] = useState({ name: '', nepaliName: '', totalCountPercent: '' as any, showWidget: true, status: 'active' as 'active' | 'completed' | 'pending' });
   const [editingRegion, setEditingRegion] = useState<IElectionRegion | null>(null);
 
   // Candidate form state
@@ -126,7 +126,7 @@ function WidgetTab() {
     setRForm({
       name: r.name,
       nepaliName: r.nepaliName,
-      totalCountPercent: r.totalCountPercent ?? 0,
+      totalCountPercent: r.totalCountPercent ?? '',
       showWidget: r.showWidget === undefined ? true : Boolean(r.showWidget),
       status: r.status
     });
@@ -136,7 +136,7 @@ function WidgetTab() {
 
   const openAddRegion = () => {
     setEditingRegion(null);
-    setRForm({ name: '', nepaliName: '', totalCountPercent: 0, showWidget: true, status: 'active' });
+    setRForm({ name: '', nepaliName: '', totalCountPercent: '' as any, showWidget: true, status: 'active' });
     setShowRegionForm(true);
     setShowCandidateForm(false);
   };
@@ -292,10 +292,10 @@ function WidgetTab() {
                   className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition" placeholder="झापा-५" />
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Count % (0–100)</label>
-                <input type="number" min="0" max="100" step="0.1" value={rForm.totalCountPercent === 0 ? 0 : rForm.totalCountPercent || ''}
-                  onChange={e => setRForm(p => ({ ...p, totalCountPercent: e.target.value === '' ? 0 : parseFloat(e.target.value) }))}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition" />
+                <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Count / Status Text</label>
+                <input type="text" value={rForm.totalCountPercent}
+                  onChange={e => setRForm(p => ({ ...p, totalCountPercent: e.target.value as any }))}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition" placeholder="e.g. 45% or Counting" />
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Status</label>

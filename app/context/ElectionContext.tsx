@@ -18,7 +18,7 @@ export interface IElectionRegion {
   _id: string;
   name: string;
   nepaliName: string;
-  totalCountPercent: number;
+  totalCountPercent: any;
   status: 'active' | 'completed' | 'pending';
   isCurrentDisplay: boolean;
   showWidget?: boolean;

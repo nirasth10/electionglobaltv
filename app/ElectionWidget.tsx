@@ -87,7 +87,7 @@ export default function ElectionWidget() {
                                 <div className="text-lg sm:text-2xl font-black text-white tabular-nums tracking-tighter leading-none mukta-extrabold">
                                     {candidate.votes.toLocaleString()}
                                 </div>
-                                <div className="text-[9px] sm:text-[11px] font-bold text-emerald-400 mukta-bold mt-0.5">▲ {candidate.changeVotes}</div>
+                                {/* <div className="text-[9px] sm:text-[11px] font-bold text-emerald-400 mukta-bold mt-0.5">▲ {candidate.changeVotes}</div> */}
                             </div>
                         </div>
                     ))}

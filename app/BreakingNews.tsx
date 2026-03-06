@@ -23,22 +23,14 @@ const BreakingNews = () => {
     if (activeItems.length === 0) return null;
 
     return (
-        <div className="fixed bottom-[80px] sm:bottom-[96px] left-0 w-full z-40 bg-white border-y-[2px] sm:border-y-[3px] border-[#131313] shadow-lg flex overflow-hidden h-9 sm:h-[48px] font-sans antialiased">
+        <div className="fixed bottom-0 left-0 w-full z-50 bg-white border-y-[2px] sm:border-y-[3px] border-[#131313] shadow-lg flex overflow-hidden h-9 sm:h-[48px] font-sans antialiased">
             {/* Logo Section */}
             <div className="bg-[#051A3B] flex items-center justify-center flex-shrink-0 z-20 relative h-full">
                 <img src="/logo.png" alt="Global TV" className="h-[90%] w-auto object-contain px-2 sm:px-3 bg-[#051A3B]" />
             </div>
 
             {/* Breaking News Label */}
-            <div className="bg-gradient-to-r from-[#cc0000] to-[#ff0000] flex items-center justify-center flex-shrink-0 z-20 relative h-full px-3 sm:px-5 shadow-[4px_0_8px_rgba(0,0,0,0.2)] border-r border-[#131313]/30">
-                <span className="flex h-2 w-2 sm:h-2.5 sm:w-2.5 relative mr-2 sm:mr-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-200 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-white shadow-[0_0_4px_rgba(255,255,255,0.8)]"></span>
-                </span>
-                <span className="text-white text-[12px] sm:text-[15px] font-black tracking-widest uppercase whitespace-nowrap translate-y-[1px] drop-shadow-md">
-                    BREAKING NEWS
-                </span>
-            </div>
+
 
             {/* Ticker Section */}
             <div className="flex-1 flex items-center overflow-hidden relative bg-white border-l border-[#051A3B]/10">

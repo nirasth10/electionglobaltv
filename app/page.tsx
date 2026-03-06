@@ -40,8 +40,8 @@ export default function ElectionDisplayPage() {
 
   return (
     <div className="min-h-screen w-full pb-24 bg-transparent text-white">
-      <BreakingNews />
       <ElectionTicker />
+      <BreakingNews />
 
       {/* Live connection indicator */}
       <div className="fixed top-3 left-3 z-40 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-black/50 backdrop-blur border border-white/10 text-[10px] font-bold mukta-bold">
