@@ -1,41 +1,65 @@
 'use client';
 
 import { useNews } from '@/app/context/NewsContext';
+import { useState, useEffect } from 'react';
 
 const BreakingNews = () => {
     const { activeItems } = useNews();
+    const [currentTime, setCurrentTime] = useState('');
+
+    useEffect(() => {
+        const updateTime = () => {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            setCurrentTime(`${hours}:${minutes}`);
+        };
+
+        updateTime();
+        const interval = setInterval(updateTime, 1000);
+        return () => clearInterval(interval);
+    }, []);
 
     if (activeItems.length === 0) return null;
 
     return (
-        <div className="fixed bottom-0 left-0 w-full z-40 font-sans antialiased mukta-regular">
-            <div className="h-8 sm:h-10 bg-red-600 border-t border-b border-white/20 shadow-lg flex overflow-hidden">
-                <div className="bg-gradient-to-r from-red-800 to-red-600 px-4 sm:px-6 flex items-center border-r border-white/20 shadow-xl flex-shrink-0 z-10 relative">
-                    <span className="flex h-2.5 w-2.5 relative mr-2 sm:mr-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
-                    </span>
-                    <h2 className="text-xs sm:text-sm font-black text-white mukta-extrabold uppercase tracking-widest whitespace-nowrap drop-shadow-sm">
-                        BREAKING NEWS
-                    </h2>
-                    {/* Corner fold effect */}
-                    <div className="absolute right-[-10px] top-0 bottom-0 w-[10px] bg-red-800 flex flex-col justify-between">
-                        <div className="border-t-[16px] sm:border-t-[20px] border-l-[10px] border-t-red-900 border-l-transparent"></div>
-                        <div className="border-b-[16px] sm:border-b-[20px] border-l-[10px] border-b-red-900 border-l-transparent"></div>
-                    </div>
-                </div>
+        <div className="fixed bottom-[80px] sm:bottom-[96px] left-0 w-full z-40 bg-white border-y-[2px] sm:border-y-[3px] border-[#131313] shadow-lg flex overflow-hidden h-9 sm:h-[48px] font-sans antialiased">
+            {/* Logo Section */}
+            <div className="bg-[#051A3B] flex items-center justify-center flex-shrink-0 z-20 relative h-full">
+                <img src="/logo.png" alt="Global TV" className="h-[90%] w-auto object-contain px-2 sm:px-3 bg-[#051A3B]" />
+            </div>
 
-                <div className="flex-1 flex items-center overflow-hidden bg-white/10 ml-2 relative">
-                    <div className="whitespace-nowrap flex absolute animate-marquee h-full items-center">
-                        {activeItems.map((item, index) => (
-                            <span key={`${item._id}-${index}`} className="flex items-center text-white text-sm sm:text-base mukta-bold">
-                                {index > 0 && (
-                                    <img src="/favicon.ico" alt="separator" className="w-4 h-4 mx-6 object-contain drop-shadow" />
-                                )}
-                                {item.text}
-                            </span>
-                        ))}
-                    </div>
+            {/* Breaking News Label */}
+            <div className="bg-gradient-to-r from-[#cc0000] to-[#ff0000] flex items-center justify-center flex-shrink-0 z-20 relative h-full px-3 sm:px-5 shadow-[4px_0_8px_rgba(0,0,0,0.2)] border-r border-[#131313]/30">
+                <span className="flex h-2 w-2 sm:h-2.5 sm:w-2.5 relative mr-2 sm:mr-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-200 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-white shadow-[0_0_4px_rgba(255,255,255,0.8)]"></span>
+                </span>
+                <span className="text-white text-[12px] sm:text-[15px] font-black tracking-widest uppercase whitespace-nowrap translate-y-[1px] drop-shadow-md">
+                    BREAKING NEWS
+                </span>
+            </div>
+
+            {/* Ticker Section */}
+            <div className="flex-1 flex items-center overflow-hidden relative bg-white border-l border-[#051A3B]/10">
+                <div className="whitespace-nowrap flex absolute animate-marquee h-full items-center">
+                    {activeItems.map((item, index) => (
+                        <span key={`${item._id}-${index}`} className="flex items-center text-[#051A3B] text-[16px] sm:text-[23px] font-extrabold mukta-bold leading-none translate-y-[2px]">
+                            {index > 0 && (
+                                <span className="inline-block w-12 sm:w-24"></span>
+                            )}
+                            {item.text}
+                        </span>
+                    ))}
+                </div>
+            </div>
+
+            {/* Time Section */}
+            <div className="relative z-20 flex-shrink-0 flex items-center h-full drop-shadow-[-2px_0px_3px_rgba(0,0,0,0.3)]">
+                <div className="time-container bg-gradient-to-b from-[#ffffff] via-[#f1f3f5] to-[#d1d5db] h-full flex items-center pr-3 sm:pr-5 text-[#051A3B] font-extrabold text-[15px] sm:text-[21px] tracking-wide overflow-hidden">
+                    <span className="relative z-10 pl-6 sm:pl-8 lg:pl-10 translate-y-[1px]">{currentTime}</span>
+                    {/* Glossy overlay */}
+                    <div className="absolute top-0 left-0 w-full h-[45%] bg-gradient-to-b from-white/80 to-transparent pointer-events-none z-0"></div>
                 </div>
             </div>
 
@@ -51,6 +75,14 @@ const BreakingNews = () => {
                 }
                 .animate-marquee:hover {
                     animation-play-state: paused;
+                }
+                .time-container {
+                    clip-path: polygon(15px 0, 100% 0, 100% 100%, 0% 100%);
+                }
+                @media (min-width: 640px) {
+                    .time-container {
+                        clip-path: polygon(25px 0, 100% 0, 100% 100%, 0% 100%);
+                    }
                 }
             `}</style>
         </div>

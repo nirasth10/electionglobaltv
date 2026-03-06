@@ -12,7 +12,7 @@ const ElectionTicker = () => {
   const hasNews = newsItems.length > 0;
 
   return (
-    <div className={`fixed left-0 w-full z-50 font-sans antialiased mukta-regular transition-all duration-500 ${hasNews ? 'bottom-[32px] sm:bottom-[40px]' : 'bottom-0'}`}>
+    <div className="fixed bottom-0 left-0 w-full z-50 font-sans antialiased mukta-regular transition-all duration-500">
       <div className="h-[80px] sm:h-[96px] bg-[#0a1120]/95 backdrop-blur-xl border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] flex overflow-hidden">
 
         {/* Branding */}
@@ -72,30 +72,6 @@ const ElectionTicker = () => {
           )}
         </div>
 
-        {/* Right: live status + admin */}
-        <div className="px-3 sm:px-6 flex items-center bg-black/40 border-l border-white/10 gap-3 flex-shrink-0">
-          <div className="flex flex-col items-end">
-            <div className="flex items-center gap-1 sm:gap-2 mb-1">
-              <span className="flex h-2 w-2 relative flex-shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-              </span>
-              <span className="text-[9px] sm:text-[10px] font-bold text-slate-200 uppercase tracking-widest mukta-bold whitespace-nowrap">Live</span>
-            </div>
-            {currentRegion && (
-              <>
-                <p className="text-[12px] sm:text-[14px] font-black text-white mukta-extrabold leading-none">{currentRegion.totalCountPercent}%</p>
-                <p className="text-[7px] sm:text-[9px] text-slate-500 uppercase mukta-semibold whitespace-nowrap">Counted</p>
-              </>
-            )}
-          </div>
-          {/* <Link
-            href="/dashboard"
-            className="hidden sm:block ml-2 px-3 py-2 bg-blue-600/50 hover:bg-blue-600 text-white text-[10px] font-bold rounded-lg transition mukta-bold whitespace-nowrap"
-          >
-            Admin
-          </Link> */}
-        </div>
       </div>
     </div>
   );
