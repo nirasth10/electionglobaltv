@@ -23,7 +23,7 @@ export default function ElectionWidget() {
                         </div>
                         <div className="text-right flex-shrink-0">
                             <div className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1 mukta-semibold">कुल गणना</div>
-                            <div className="text-xl sm:text-2xl font-black text-white mukta-extrabold">{currentRegion.totalCountPercent}%</div>
+                            <div className="text-xl sm:text-2xl font-black text-white mukta-extrabold">{currentRegion.totalCountPercent}</div>
                             <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full mukta-bold ${currentRegion.status === 'active' ? 'bg-emerald-500/20 text-emerald-400' :
                                 currentRegion.status === 'completed' ? 'bg-blue-500/20 text-blue-400' :
                                     'bg-orange-500/20 text-orange-400'
