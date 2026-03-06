@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { useElection, IElectionRegion, ICandidate } from '@/app/context/ElectionContext';
@@ -102,133 +102,107 @@ function StatusBadge({ status }: { status: string }) {
 function LeftWidgetTab() {
   const { leftRegions: regions, refreshLeftRegions: refreshRegions, createRegion, updateRegion, deleteRegion, setDisplayRegion } = useLeftElection();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [showRegionForm, setShowRegionForm] = useState(false);
-  const [editingCandidateId, setEditingCandidateId] = useState<string | null>(null);
-  const [showCandidateForm, setShowCandidateForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
-
-  const flash = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 2500); };
-
-  const selected = regions.find(r => r._id === selectedId) ?? regions[0];
-
-  useEffect(() => {
-    if (!selectedId && regions.length > 0) setSelectedId(regions[0]._id);
-  }, [regions, selectedId]);
-
-  const [rForm, setRForm] = useState({ name: '', nepaliName: '', totalCountPercent: '' as any, showWidget: true, status: 'active' as 'active' | 'completed' | 'pending' });
-  const [editingRegion, setEditingRegion] = useState<ILeftElectionRegion | null>(null);
-
-  // Candidate form state
+  const flash = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 3000); };
+  const [editableRegions, setEditableRegions] = useState<ILeftElectionRegion[]>([]);
+  useEffect(() => { setEditableRegions(regions); }, [regions]);
+  const hasChanges = useMemo(() => JSON.stringify(editableRegions) !== JSON.stringify(regions), [editableRegions, regions]);
+  const selected = editableRegions.find(r => r._id === selectedId) ?? editableRegions[0];
+  useEffect(() => { if (!selectedId && editableRegions.length > 0) setSelectedId(editableRegions[0]._id); }, [editableRegions, selectedId]);
+  const [newRegionForm, setNewRegionForm] = useState({ name: '', nepaliName: '', totalCountPercent: '' as any, showWidget: true, status: 'active' as 'active' | 'completed' | 'pending' });
+  const [showNewRegionForm, setShowNewRegionForm] = useState(false);
   const emptyC = { name: '', party: '', votes: 0, changeVotes: 0, color: '#3b82f6', imageUrl: '', partySymbol: '' };
-  const [cForm, setCForm] = useState(emptyC);
-
-  const openEditRegion = (r: ILeftElectionRegion) => {
-    setEditingRegion(r);
-    setRForm({
-      name: r.name,
-      nepaliName: r.nepaliName,
-      totalCountPercent: r.totalCountPercent ?? '',
-      showWidget: r.showWidget === undefined ? true : Boolean(r.showWidget),
-      status: r.status
-    });
-    setShowRegionForm(true);
-    setShowCandidateForm(false);
+  const [newCandidateForm, setNewCandidateForm] = useState(emptyC);
+  const [showNewCandidateForm, setShowNewCandidateForm] = useState(false);
+  const handleRegionChange = (id: string, field: keyof ILeftElectionRegion, value: any) => {
+    setEditableRegions(prev => prev.map(r => r._id === id ? { ...r, [field]: value } : r));
   };
-
-  const openAddRegion = () => {
-    setEditingRegion(null);
-    setRForm({ name: '', nepaliName: '', totalCountPercent: '' as any, showWidget: true, status: 'active' });
-    setShowRegionForm(true);
-    setShowCandidateForm(false);
+  const handleCandidateChange = (regionId: string, candidateId: string, field: keyof ILeftCandidate, value: any) => {
+    setEditableRegions(prev => prev.map(r =>
+      r._id === regionId ? { ...r, candidates: r.candidates.map((c: ILeftCandidate) => c._id === candidateId ? { ...c, [field]: value } : c) } : r
+    ));
   };
-
-  const saveRegion = async () => {
-    try {
-      setSaving(true);
-      if (editingRegion) {
-        await updateRegion(editingRegion._id, rForm);
-        flash('Region updated ✓');
-      } else {
-        await createRegion({ ...rForm, candidates: [], isCurrentDisplay: regions.length === 0 });
-        flash('Region created ✓');
-      }
-      setShowRegionForm(false);
-      setEditingRegion(null);
-    } finally { setSaving(false); }
+  const addCandidateToRegion = (regionId: string) => {
+    if (!newCandidateForm.name || !newCandidateForm.party) { flash('Name and party are required.'); return; }
+    const tempId = `new-${Date.now()}-${Math.random()}`;
+    setEditableRegions(prev => prev.map(r =>
+      r._id === regionId ? { ...r, candidates: [...r.candidates, { ...newCandidateForm, _id: tempId }] } : r
+    ));
+    setNewCandidateForm(emptyC); setShowNewCandidateForm(false);
+    flash('Candidate added. Hit Save All to persist.');
   };
-
-  const openEditCandidate = (c: ILeftCandidate) => {
-    setEditingCandidateId(c._id);
-    setCForm({ name: c.name, party: c.party, votes: c.votes, changeVotes: c.changeVotes, color: c.color, imageUrl: c.imageUrl || '', partySymbol: c.partySymbol || '' });
-    setShowCandidateForm(true);
-    setShowRegionForm(false);
+  const deleteCandidateFromRegion = (regionId: string, candidateId: string) => {
+    if (!confirm('Remove this candidate?')) return;
+    setEditableRegions(prev => prev.map(r =>
+      r._id === regionId ? { ...r, candidates: r.candidates.filter((c: ILeftCandidate) => c._id !== candidateId) } : r
+    ));
+    flash('Candidate removed. Hit Save All to persist.');
   };
-
-  const openAddCandidate = () => {
-    setEditingCandidateId(null);
-    setCForm(emptyC);
-    setShowCandidateForm(true);
-    setShowRegionForm(false);
+  const addRegion = () => {
+    if (!newRegionForm.name || !newRegionForm.nepaliName) { flash('Names are required.'); return; }
+    const tempId = `new-${Date.now()}-${Math.random()}`;
+    setEditableRegions(prev => [...prev, { ...newRegionForm, _id: tempId, candidates: [], isCurrentDisplay: false, lastUpdated: new Date().toISOString() } as unknown as ILeftElectionRegion]);
+    setNewRegionForm({ name: '', nepaliName: '', totalCountPercent: '' as any, showWidget: true, status: 'active' });
+    setShowNewRegionForm(false); flash('Region added. Hit Save All to persist.');
   };
-
-  const saveCandidate = async () => {
-    if (!selected) return;
-    try {
-      setSaving(true);
-      let newCandidates: ILeftCandidate[];
-      if (editingCandidateId) {
-        newCandidates = selected.candidates.map((c: ILeftCandidate) =>
-          c._id === editingCandidateId ? { ...c, ...cForm } : c
-        );
-        flash('Candidate updated ✓');
-      } else {
-        const tempId = [...Array(24)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
-        newCandidates = [...selected.candidates, { ...cForm, _id: tempId }];
-        flash('Candidate added ✓');
-      }
-      await updateRegion(selected._id, { candidates: newCandidates });
-      setShowCandidateForm(false);
-      setEditingCandidateId(null);
-      setCForm(emptyC);
-    } finally { setSaving(false); }
-  };
-
-  const deleteCandidate = async (cid: string) => {
-    if (!selected || !confirm('Delete this candidate?')) return;
-    const newCandidates = selected.candidates.filter((c: ILeftCandidate) => c._id !== cid);
-    await updateRegion(selected._id, { candidates: newCandidates });
-    flash('Candidate deleted');
-  };
-
-  const handleDeleteRegion = async (id: string) => {
+  const deleteRegionFromList = (id: string) => {
     if (!confirm('Delete this region and all its candidates?')) return;
-    await deleteRegion(id);
-    if (selectedId === id) setSelectedId(regions.find((r: ILeftElectionRegion) => r._id !== id)?._id ?? null);
-    flash('Region deleted');
+    setEditableRegions(prev => prev.filter(r => r._id !== id));
+    if (selectedId === id) setSelectedId(editableRegions.find(r => r._id !== id)?._id ?? null);
+    flash('Region removed. Hit Save All to persist.');
+  };
+  const saveAllChanges = async () => {
+    setSaving(true);
+    try {
+      for (const er of editableRegions) {
+        const orig = regions.find(r => r._id === er._id);
+        if (!orig) {
+          await createRegion({ name: er.name, nepaliName: er.nepaliName, totalCountPercent: er.totalCountPercent, showWidget: er.showWidget, status: er.status, candidates: er.candidates.map(({ _id, ...rest }: any) => rest) as any, isCurrentDisplay: er.isCurrentDisplay });
+        } else {
+          const changes: Partial<ILeftElectionRegion> = {};
+          if (er.name !== orig.name) changes.name = er.name;
+          if (er.nepaliName !== orig.nepaliName) changes.nepaliName = er.nepaliName;
+          if (er.totalCountPercent !== orig.totalCountPercent) changes.totalCountPercent = er.totalCountPercent;
+          if (er.showWidget !== orig.showWidget) changes.showWidget = er.showWidget;
+          if (er.status !== orig.status) changes.status = er.status;
+          const candidatesChanged = er.candidates.length !== orig.candidates.length ||
+            er.candidates.some((ec: ILeftCandidate) => { const oc = orig.candidates.find((c: ILeftCandidate) => c._id === ec._id); return !oc || JSON.stringify(ec) !== JSON.stringify(oc); });
+          if (Object.keys(changes).length > 0 || candidatesChanged) {
+            const candidatesToSave = er.candidates.map((c: ILeftCandidate) => c._id?.startsWith('new-') ? (({ _id, ...rest }) => rest)(c) : c) as any;
+            await updateRegion(er._id, { ...changes, candidates: candidatesToSave });
+          }
+        }
+      }
+      for (const orig of regions) {
+        if (!editableRegions.some(r => r._id === orig._id)) await deleteRegion(orig._id);
+      }
+      flash('All changes saved ✓'); refreshRegions();
+    } catch { flash('Failed to save changes.'); } finally { setSaving(false); }
   };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Left: Regions list */}
       <div className="lg:col-span-1 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest mukta-bold flex items-center gap-2">
-            <Layers size={14} className="text-blue-400" /> Regions
-          </h2>
-          <button onClick={openAddRegion}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition mukta-bold">
-            <Plus size={12} /> Add
-          </button>
+          <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest mukta-bold flex items-center gap-2"><Layers size={14} className="text-blue-400" /> Regions</h2>
+          <button onClick={() => setShowNewRegionForm(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition mukta-bold"><Plus size={12} /> Add</button>
         </div>
-
+        {showNewRegionForm && (
+          <div className="bg-black/30 border border-white/10 rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-bold text-white mukta-bold">New Region</h4>
+              <button onClick={() => setShowNewRegionForm(false)} className="text-slate-500 hover:text-white transition"><X size={14} /></button>
+            </div>
+            <input value={newRegionForm.name} onChange={e => setNewRegionForm(p => ({ ...p, name: e.target.value }))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition" placeholder="English name" />
+            <input value={newRegionForm.nepaliName} onChange={e => setNewRegionForm(p => ({ ...p, nepaliName: e.target.value }))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition" placeholder="नेपाली नाम" />
+            <button onClick={addRegion} className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition mukta-bold">Add Region</button>
+          </div>
+        )}
         <div className="space-y-2">
-          {regions.map((r: ILeftElectionRegion) => (
-            <div key={r._id}
-              onClick={() => setSelectedId(r._id)}
-              className={`p-3 rounded-xl border cursor-pointer transition group ${selectedId === r._id || (!selectedId && r._id === regions[0]?._id)
-                ? 'bg-blue-600/20 border-blue-500/50 ring-1 ring-blue-500/30'
-                : 'bg-white/[0.03] border-white/10 hover:bg-white/[0.06] hover:border-white/20'}`}>
+          {editableRegions.map((r: ILeftElectionRegion) => (
+            <div key={r._id} onClick={() => setSelectedId(r._id)}
+              className={`p-3 rounded-xl border cursor-pointer transition group ${(selectedId === r._id || (!selectedId && r._id === editableRegions[0]?._id)) ? 'bg-blue-600/20 border-blue-500/50 ring-1 ring-blue-500/30' : 'bg-white/[0.03] border-white/10 hover:bg-white/[0.06] hover:border-white/20'}`}>
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="font-bold text-white text-sm mukta-bold truncate">{r.nepaliName}</p>
@@ -236,240 +210,100 @@ function LeftWidgetTab() {
                   <div className="flex items-center gap-2 mt-1.5">
                     <StatusBadge status={r.status} />
                     <span className="text-[10px] text-blue-400 font-bold">{r.totalCountPercent}%</span>
-                    {r.isCurrentDisplay && (
-                      <span className="text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold mukta-bold">ON AIR</span>
-                    )}
+                    {r.isCurrentDisplay && <span className="text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold mukta-bold">ON AIR</span>}
                   </div>
                 </div>
-                <div className="flex gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition">
-                  <button onClick={e => { e.stopPropagation(); openEditRegion(r); }}
-                    className="p-1.5 bg-white/5 hover:bg-blue-600/40 rounded-lg text-slate-400 hover:text-white transition">
-                    <Pencil size={12} />
-                  </button>
-                  <button onClick={e => { e.stopPropagation(); handleDeleteRegion(r._id); }}
-                    className="p-1.5 bg-white/5 hover:bg-red-600/40 rounded-lg text-slate-400 hover:text-red-400 transition">
-                    <Trash2 size={12} />
-                  </button>
-                </div>
+                <button onClick={e => { e.stopPropagation(); deleteRegionFromList(r._id); }} className="p-1.5 bg-white/5 hover:bg-red-600/40 rounded-lg text-slate-400 hover:text-red-400 transition opacity-0 group-hover:opacity-100"><Trash2 size={12} /></button>
               </div>
             </div>
           ))}
-
-          {regions.length === 0 && (
-            <div className="text-center py-8 text-slate-500 text-sm mukta-semibold">
-              No regions yet. Add one →
-            </div>
-          )}
+          {editableRegions.length === 0 && <div className="text-center py-8 text-slate-500 text-sm mukta-semibold">No regions yet. Add one →</div>}
         </div>
       </div>
 
-      {/* Right: Detail panel */}
       <div className="lg:col-span-2 space-y-4">
-
-        {/* Flash message */}
-        {msg && (
-          <div className="px-4 py-2.5 bg-emerald-600/20 border border-emerald-500/40 rounded-xl text-emerald-400 text-sm font-bold mukta-bold flex items-center gap-2">
-            <CheckCircle2 size={14} /> {msg}
-          </div>
-        )}
-
-        {/* Region Edit Form */}
-        {showRegionForm && (
-          <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-white mukta-bold flex items-center gap-2">
-                <Monitor size={16} className="text-blue-400" />
-                {editingRegion ? 'Edit Region' : 'New Region'}
-              </h3>
-              <button onClick={() => setShowRegionForm(false)} className="text-slate-500 hover:text-white transition"><X size={16} /></button>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">English Name</label>
-                <input value={rForm.name} onChange={e => setRForm(p => ({ ...p, name: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition" placeholder="Jhapa-5" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Nepali Name</label>
-                <input value={rForm.nepaliName} onChange={e => setRForm(p => ({ ...p, nepaliName: e.target.value }))}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition" placeholder="झापा-५" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Count / Status Text</label>
-                <input type="text" value={rForm.totalCountPercent}
-                  onChange={e => setRForm(p => ({ ...p, totalCountPercent: e.target.value as any }))}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition" placeholder="e.g. 45% or Counting" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Status</label>
-                <select value={rForm.status} onChange={e => setRForm(p => ({ ...p, status: e.target.value as any }))}
-                  className="w-full px-3 py-2 bg-[#0a1120] border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition">
-                  <option value="pending">Pending</option>
-                  <option value="active">Active</option>
-                  <option value="completed">Completed</option>
-                </select>
-              </div>
-            </div>
-            {editingRegion && (
-              <div className="flex items-center gap-2">
-                <input type="checkbox" id="onair" checked={editingRegion.isCurrentDisplay}
-                  onChange={async e => {
-                    if (e.target.checked) { await setDisplayRegion(editingRegion._id); flash('Set as On-Air ✓'); }
-                  }}
-                  className="w-4 h-4 accent-blue-500" />
-                <label htmlFor="onair" className="text-sm text-slate-300 mukta-semibold cursor-pointer">Set as ON AIR (public display)</label>
-              </div>
-            )}
-            <div className="flex items-center gap-2 mt-2">
-              <input type="checkbox" id="showwidget" checked={rForm.showWidget}
-                onChange={async e => {
-                  const checked = e.target.checked;
-                  setRForm(p => ({ ...p, showWidget: checked }));
-                  if (editingRegion) {
-                    await updateRegion(editingRegion._id, { ...rForm, showWidget: checked });
-                    flash(`Widget ${checked ? 'shown' : 'hidden'} ✓`);
-                  }
-                }}
-                className="w-4 h-4 accent-blue-500" />
-              <label htmlFor="showwidget" className="text-sm text-slate-300 mukta-semibold cursor-pointer">Show Election Widget on UI</label>
-            </div>
-            <button onClick={saveRegion} disabled={saving}
-              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 mukta-bold">
-              <Save size={14} /> {saving ? 'Saving…' : 'Save Region'}
-            </button>
-          </div>
-        )}
-
-        {/* Candidates panel */}
+        {msg && <div className="px-4 py-2.5 bg-emerald-600/20 border border-emerald-500/40 rounded-xl text-emerald-400 text-sm font-bold mukta-bold flex items-center gap-2"><CheckCircle2 size={14} />{msg}</div>}
+        <button onClick={saveAllChanges} disabled={saving || !hasChanges}
+          className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-40 text-white font-black rounded-xl transition flex items-center justify-center gap-2 mukta-bold text-sm shadow-lg shadow-blue-900/30">
+          <Save size={16} />{saving ? 'Saving all changes…' : '💾 Save All Changes'}
+        </button>
         {selected && (
-          <div className="bg-white/[0.04] border border-white/10 rounded-2xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-white mukta-bold flex items-center gap-2">
-                  <Users size={15} className="text-purple-400" />
-                  Candidates — {selected.nepaliName}
-                </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">{selected.candidates.length} candidates</p>
+          <>
+            <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-white mukta-bold flex items-center gap-2"><Monitor size={16} className="text-blue-400" />Region Details</h3>
+                {selected.isCurrentDisplay
+                  ? <span className="text-[11px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-1 rounded-full font-bold mukta-bold">🔴 ON AIR</span>
+                  : <button onClick={() => setDisplayRegion(selected._id).then(() => flash('Set as On-Air ✓'))} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600/30 hover:bg-amber-600/50 text-amber-300 text-xs font-bold rounded-lg transition mukta-bold border border-amber-600/40"><Eye size={11} />Set On-Air</button>}
               </div>
-              <div className="flex gap-2">
-                {!selected.isCurrentDisplay && (
-                  <button onClick={() => setDisplayRegion(selected._id)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600/30 hover:bg-amber-600/50 text-amber-300 text-xs font-bold rounded-lg transition mukta-bold border border-amber-600/40">
-                    <Eye size={11} /> Set On-Air
-                  </button>
-                )}
-                <button onClick={openAddCandidate}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg transition mukta-bold">
-                  <Plus size={12} /> Add Candidate
-                </button>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">English Name</label><input value={selected.name} onChange={e => handleRegionChange(selected._id, 'name', e.target.value)} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition" /></div>
+                <div><label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Nepali Name</label><input value={selected.nepaliName} onChange={e => handleRegionChange(selected._id, 'nepaliName', e.target.value)} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition" /></div>
+                <div><label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Count / %</label><input value={selected.totalCountPercent ?? ''} onChange={e => handleRegionChange(selected._id, 'totalCountPercent', e.target.value)} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition" placeholder="45% or Counting" /></div>
+                <div><label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Status</label>
+                  <select value={selected.status} onChange={e => handleRegionChange(selected._id, 'status', e.target.value as any)} className="w-full px-3 py-2 bg-[#0a1120] border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition">
+                    <option value="pending">Pending</option><option value="active">Active</option><option value="completed">Completed</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id={`lw_show_${selected._id}`} checked={selected.showWidget ?? true} onChange={e => handleRegionChange(selected._id, 'showWidget', e.target.checked)} className="w-4 h-4 accent-blue-500" />
+                <label htmlFor={`lw_show_${selected._id}`} className="text-sm text-slate-300 mukta-semibold cursor-pointer">Show Election Widget on UI</label>
               </div>
             </div>
 
-            {/* Candidate form */}
-            {showCandidateForm && (
-              <div className="m-4 bg-black/30 border border-white/10 rounded-xl p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-white mukta-bold">{editingCandidateId ? 'Edit Candidate' : 'New Candidate'}</h4>
-                  <button onClick={() => { setShowCandidateForm(false); setEditingCandidateId(null); }} className="text-slate-500 hover:text-white transition"><X size={14} /></button>
+            <div className="bg-white/[0.04] border border-white/10 rounded-2xl overflow-hidden">
+              <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-white mukta-bold flex items-center gap-2"><Users size={15} className="text-purple-400" />Candidates — {selected.nepaliName}</h3>
+                  <p className="text-[11px] text-slate-500 mt-0.5">{selected.candidates.length} candidates · edit inline</p>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="col-span-2">
-                    <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Full Name (Nepali)</label>
-                    <input value={cForm.name} onChange={e => setCForm(p => ({ ...p, name: e.target.value }))}
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition" placeholder="केपी शर्मा ओली" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Party</label>
-                    <input value={cForm.party} onChange={e => setCForm(p => ({ ...p, party: e.target.value }))}
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition" placeholder="CPN-UML" />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Party Flag Image</label>
-                    <ImageInput value={cForm.partySymbol} onChange={v => setCForm(p => ({ ...p, partySymbol: v }))} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Total Votes</label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={toNepali(cForm.votes)}
-                      onChange={e => setCForm(p => ({ ...p, votes: parseNepaliInt(e.target.value) }))}
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition mukta-bold"
-                      placeholder="०"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Vote Change</label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={toNepali(cForm.changeVotes)}
-                      onChange={e => setCForm(p => ({ ...p, changeVotes: parseNepaliInt(e.target.value) }))}
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition mukta-bold"
-                      placeholder="०"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Party Color</label>
-                    <div className="flex gap-2 items-center">
-                      <input type="color" value={cForm.color} onChange={e => setCForm(p => ({ ...p, color: e.target.value }))}
-                        className="w-10 h-9 rounded-lg border border-white/10 cursor-pointer bg-transparent" />
-                      <input value={cForm.color} onChange={e => setCForm(p => ({ ...p, color: e.target.value }))}
-                        className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition" />
-                    </div>
-                  </div>
-                  <div className="col-span-2">
-                    <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Photo</label>
-                    <ImageInput value={cForm.imageUrl} onChange={v => setCForm(p => ({ ...p, imageUrl: v }))} />
-                  </div>
-                </div>
-                <button onClick={saveCandidate} disabled={saving}
-                  className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 mukta-bold">
-                  <Save size={14} /> {saving ? 'Saving…' : 'Save Candidate'}
-                </button>
+                <button onClick={() => setShowNewCandidateForm(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg transition mukta-bold"><Plus size={12} />Add Candidate</button>
               </div>
-            )}
-
-            {/* Candidates list */}
-            <div className="divide-y divide-white/5">
-              {selected.candidates.length === 0 && (
-                <div className="px-5 py-8 text-center text-slate-500 text-sm mukta-semibold">No candidates yet. Add one above.</div>
+              {showNewCandidateForm && (
+                <div className="m-4 bg-black/30 border border-white/10 rounded-xl p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-bold text-white mukta-bold">New Candidate</h4>
+                    <button onClick={() => { setShowNewCandidateForm(false); setNewCandidateForm(emptyC); }} className="text-slate-500 hover:text-white transition"><X size={14} /></button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="col-span-2"><label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Full Name</label><input value={newCandidateForm.name} onChange={e => setNewCandidateForm(p => ({ ...p, name: e.target.value }))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition" placeholder="केपी शर्मा ओली" /></div>
+                    <div><label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Party</label><input value={newCandidateForm.party} onChange={e => setNewCandidateForm(p => ({ ...p, party: e.target.value }))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition" placeholder="CPN-UML" /></div>
+                    <div><label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Color</label><div className="flex gap-2"><input type="color" value={newCandidateForm.color} onChange={e => setNewCandidateForm(p => ({ ...p, color: e.target.value }))} className="w-9 h-9 rounded border border-white/10 cursor-pointer bg-transparent" /><input value={newCandidateForm.color} onChange={e => setNewCandidateForm(p => ({ ...p, color: e.target.value }))} className="flex-1 px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-xs focus:outline-none" /></div></div>
+                    <div><label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Votes</label><input type="text" inputMode="numeric" value={toNepali(newCandidateForm.votes)} onChange={e => setNewCandidateForm(p => ({ ...p, votes: parseNepaliInt(e.target.value) }))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition mukta-bold" placeholder="०" /></div>
+                    <div><label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Vote Change</label><input type="text" inputMode="numeric" value={toNepali(newCandidateForm.changeVotes)} onChange={e => setNewCandidateForm(p => ({ ...p, changeVotes: parseNepaliInt(e.target.value) }))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition mukta-bold" placeholder="०" /></div>
+                    <div className="col-span-2"><label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Party Flag Image</label><ImageInput value={newCandidateForm.partySymbol} onChange={v => setNewCandidateForm(p => ({ ...p, partySymbol: v }))} /></div>
+                    <div className="col-span-2"><label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Photo</label><ImageInput value={newCandidateForm.imageUrl} onChange={v => setNewCandidateForm(p => ({ ...p, imageUrl: v }))} /></div>
+                  </div>
+                  <button onClick={() => addCandidateToRegion(selected._id)} className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 mukta-bold"><Plus size={14} />Add Candidate</button>
+                </div>
               )}
-              {selected.candidates.map((c: ILeftCandidate) => (
-                <div key={c._id} className="px-5 py-3.5 flex items-center gap-4 hover:bg-white/[0.02] transition group">
-                  <div className="w-1 h-12 rounded-full flex-shrink-0" style={{ backgroundColor: c.color }} />
-                  {c.imageUrl ? (
-                    <img src={c.imageUrl} alt={c.name} className="w-10 h-10 rounded-full object-cover border border-white/10 flex-shrink-0" />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-lg flex-shrink-0" style={{ background: c.color + '22' }}>
-                      {c.name.charAt(0)}
+              <div className="divide-y divide-white/5">
+                {selected.candidates.length === 0 && <div className="px-5 py-8 text-center text-slate-500 text-sm mukta-semibold">No candidates yet.</div>}
+                {selected.candidates.map((c: ILeftCandidate, idx: number) => (
+                  <div key={c._id} className="p-4 space-y-3 hover:bg-white/[0.02] transition">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full border border-white/20" style={{ backgroundColor: c.color }} />
+                        <span className="text-xs font-bold text-slate-400 mukta-bold">#{idx + 1}</span>
+                        {c.imageUrl && <img src={c.imageUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-white/10" />}
+                      </div>
+                      <button onClick={() => deleteCandidateFromRegion(selected._id, c._id)} className="p-1.5 bg-white/5 hover:bg-red-600/40 rounded-lg text-slate-500 hover:text-red-400 transition"><Trash2 size={12} /></button>
                     </div>
-                  )}
-                  {c.partySymbol && (
-                    <img src={c.partySymbol} alt={c.party} className="w-6 h-6 rounded-full object-cover border border-white/10 sm:hidden md:block flex-shrink-0" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-white text-sm mukta-bold truncate">{c.name}</p>
-                    <p className="text-[11px] text-slate-400">{c.party}</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="col-span-2"><label className="text-[10px] font-bold text-slate-500 block mb-1 mukta-bold uppercase">Full Name</label><input value={c.name} onChange={e => handleCandidateChange(selected._id, c._id, 'name', e.target.value)} className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition mukta-bold" /></div>
+                      <div><label className="text-[10px] font-bold text-slate-500 block mb-1 mukta-bold uppercase">Party</label><input value={c.party} onChange={e => handleCandidateChange(selected._id, c._id, 'party', e.target.value)} className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition" /></div>
+                      <div><label className="text-[10px] font-bold text-slate-500 block mb-1 mukta-bold uppercase">Color</label><div className="flex gap-1 items-center"><input type="color" value={c.color} onChange={e => handleCandidateChange(selected._id, c._id, 'color', e.target.value)} className="w-9 h-8 rounded border border-white/10 cursor-pointer bg-transparent flex-shrink-0" /><input value={c.color} onChange={e => handleCandidateChange(selected._id, c._id, 'color', e.target.value)} className="flex-1 px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-xs focus:outline-none focus:border-purple-500" /></div></div>
+                      <div><label className="text-[10px] font-bold text-slate-500 block mb-1 mukta-bold uppercase">Total Votes</label><input type="text" inputMode="numeric" value={toNepali(c.votes)} onChange={e => handleCandidateChange(selected._id, c._id, 'votes', parseNepaliInt(e.target.value))} className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition mukta-bold" /></div>
+                      <div><label className="text-[10px] font-bold text-slate-500 block mb-1 mukta-bold uppercase">Vote Change</label><input type="text" inputMode="numeric" value={toNepali(c.changeVotes)} onChange={e => handleCandidateChange(selected._id, c._id, 'changeVotes', parseNepaliInt(e.target.value))} className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition mukta-bold" /></div>
+                      <div><label className="text-[10px] font-bold text-slate-500 block mb-1 mukta-bold uppercase">Photo URL</label><input value={c.imageUrl || ''} onChange={e => handleCandidateChange(selected._id, c._id, 'imageUrl', e.target.value)} className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-xs focus:outline-none focus:border-purple-500 transition" placeholder="https://..." /></div>
+                      <div><label className="text-[10px] font-bold text-slate-500 block mb-1 mukta-bold uppercase">Party Flag URL</label><input value={c.partySymbol || ''} onChange={e => handleCandidateChange(selected._id, c._id, 'partySymbol', e.target.value)} className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-xs focus:outline-none focus:border-purple-500 transition" placeholder="https://..." /></div>
+                    </div>
                   </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="font-black text-white text-base mukta-extrabold tabular-nums">{formatNepaliVotes(c.votes)}</p>
-                    <p className="text-[11px] text-emerald-400 font-bold">▲ {toNepali(c.changeVotes)}</p>
-                  </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
-                    <button onClick={() => openEditCandidate(c)}
-                      className="p-1.5 bg-white/5 hover:bg-blue-600/40 rounded-lg text-slate-400 hover:text-white transition">
-                      <Pencil size={12} />
-                    </button>
-                    <button onClick={() => deleteCandidate(c._id)}
-                      className="p-1.5 bg-white/5 hover:bg-red-600/40 rounded-lg text-slate-400 hover:text-red-400 transition">
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>
@@ -488,103 +322,164 @@ function WidgetTab() {
 
   const flash = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 2500); };
 
-  const selected = regions.find(r => r._id === selectedId) ?? regions[0];
+  // State for all regions and their candidates, for inline editing
+  const [editableRegions, setEditableRegions] = useState<IElectionRegion[]>([]);
+  useEffect(() => {
+    setEditableRegions(regions);
+  }, [regions]);
+
+  // Track changes to enable/disable Save All button
+  const hasChanges = useMemo(() => {
+    return JSON.stringify(editableRegions) !== JSON.stringify(regions);
+  }, [editableRegions, regions]);
+
+  const selected = editableRegions.find(r => r._id === selectedId) ?? editableRegions[0];
 
   useEffect(() => {
-    if (!selectedId && regions.length > 0) setSelectedId(regions[0]._id);
-  }, [regions, selectedId]);
+    if (!selectedId && editableRegions.length > 0) setSelectedId(editableRegions[0]._id);
+  }, [editableRegions, selectedId]);
 
-  // Region form state
-  const [rForm, setRForm] = useState({ name: '', nepaliName: '', totalCountPercent: '' as any, showWidget: true, status: 'active' as 'active' | 'completed' | 'pending' });
-  const [editingRegion, setEditingRegion] = useState<IElectionRegion | null>(null);
+  // Region form state (for adding new region)
+  const [newRegionForm, setNewRegionForm] = useState({ name: '', nepaliName: '', totalCountPercent: '' as any, showWidget: true, status: 'active' as 'active' | 'completed' | 'pending' });
+  const [showNewRegionForm, setShowNewRegionForm] = useState(false);
 
-  // Candidate form state
+  // Candidate form state (for adding new candidate)
   const emptyC = { name: '', party: '', votes: 0, changeVotes: 0, color: '#3b82f6', imageUrl: '', partySymbol: '' };
-  const [cForm, setCForm] = useState(emptyC);
+  const [newCandidateForm, setNewCandidateForm] = useState(emptyC);
+  const [showNewCandidateForm, setShowNewCandidateForm] = useState(false);
 
-  const openEditRegion = (r: IElectionRegion) => {
-    setEditingRegion(r);
-    setRForm({
-      name: r.name,
-      nepaliName: r.nepaliName,
-      totalCountPercent: r.totalCountPercent ?? '',
-      showWidget: r.showWidget === undefined ? true : Boolean(r.showWidget),
-      status: r.status
-    });
-    setShowRegionForm(true);
-    setShowCandidateForm(false);
+  const handleRegionChange = (id: string, field: keyof IElectionRegion, value: any) => {
+    setEditableRegions(prev => prev.map(r =>
+      r._id === id ? { ...r, [field]: value } : r
+    ));
   };
 
-  const openAddRegion = () => {
-    setEditingRegion(null);
-    setRForm({ name: '', nepaliName: '', totalCountPercent: '' as any, showWidget: true, status: 'active' });
-    setShowRegionForm(true);
-    setShowCandidateForm(false);
+  const handleCandidateChange = (regionId: string, candidateId: string, field: keyof ICandidate, value: any) => {
+    setEditableRegions(prev => prev.map(r =>
+      r._id === regionId
+        ? {
+          ...r,
+          candidates: r.candidates.map(c =>
+            c._id === candidateId ? { ...c, [field]: value } : c
+          )
+        }
+        : r
+    ));
   };
 
-  const saveRegion = async () => {
+  const addCandidateToRegion = (regionId: string) => {
+    if (!newCandidateForm.name || !newCandidateForm.party) {
+      flash('Candidate name and party are required.');
+      return;
+    }
+    const tempId = `new-${Date.now()}-${Math.random()}`; // Temporary ID for new candidates
+    setEditableRegions(prev => prev.map(r =>
+      r._id === regionId
+        ? { ...r, candidates: [...r.candidates, { ...newCandidateForm, _id: tempId }] }
+        : r
+    ));
+    setNewCandidateForm(emptyC);
+    setShowNewCandidateForm(false);
+    flash('Candidate added locally. Save All Changes to persist.');
+  };
+
+  const deleteCandidateFromRegion = (regionId: string, candidateId: string) => {
+    if (!confirm('Are you sure you want to delete this candidate?')) return;
+    setEditableRegions(prev => prev.map(r =>
+      r._id === regionId
+        ? { ...r, candidates: r.candidates.filter(c => c._id !== candidateId) }
+        : r
+    ));
+    flash('Candidate deleted locally. Save All Changes to persist.');
+  };
+
+  const addRegion = () => {
+    if (!newRegionForm.name || !newRegionForm.nepaliName) {
+      flash('Region English and Nepali names are required.');
+      return;
+    }
+    const tempId = `new-${Date.now()}-${Math.random()}`; // Temporary ID for new regions
+    setEditableRegions(prev => [...prev, { ...newRegionForm, _id: tempId, candidates: [], isCurrentDisplay: false, lastUpdated: new Date().toISOString() } as unknown as IElectionRegion]);
+    setNewRegionForm({ name: '', nepaliName: '', totalCountPercent: '' as any, showWidget: true, status: 'active' });
+    setShowNewRegionForm(false);
+    flash('Region added locally. Save All Changes to persist.');
+  };
+
+  const deleteRegionFromList = (id: string) => {
+    if (!confirm('Are you sure you want to delete this region and all its candidates?')) return;
+    setEditableRegions(prev => prev.filter(r => r._id !== id));
+    if (selectedId === id) setSelectedId(editableRegions.find(r => r._id !== id)?._id ?? null);
+    flash('Region deleted locally. Save All Changes to persist.');
+  };
+
+  const saveAllChanges = async () => {
+    setSaving(true);
     try {
-      setSaving(true);
-      if (editingRegion) {
-        await updateRegion(editingRegion._id, rForm);
-        flash('Region updated ✓');
-      } else {
-        await createRegion({ ...rForm, candidates: [], isCurrentDisplay: regions.length === 0 });
-        flash('Region created ✓');
+      for (const editableRegion of editableRegions) {
+        const originalRegion = regions.find(r => r._id === editableRegion._id);
+
+        if (!originalRegion) {
+          // This is a new region
+          await createRegion({
+            name: editableRegion.name,
+            nepaliName: editableRegion.nepaliName,
+            totalCountPercent: editableRegion.totalCountPercent,
+            showWidget: editableRegion.showWidget,
+            status: editableRegion.status,
+            candidates: editableRegion.candidates.map(({ _id, ...rest }) => rest) as any,
+            isCurrentDisplay: editableRegion.isCurrentDisplay,
+          });
+        } else {
+          // Existing region, check for updates
+          const changes: Partial<IElectionRegion> = {};
+          if (editableRegion.name !== originalRegion.name) changes.name = editableRegion.name;
+          if (editableRegion.nepaliName !== originalRegion.nepaliName) changes.nepaliName = editableRegion.nepaliName;
+          if (editableRegion.totalCountPercent !== originalRegion.totalCountPercent) changes.totalCountPercent = editableRegion.totalCountPercent;
+          if (editableRegion.showWidget !== originalRegion.showWidget) changes.showWidget = editableRegion.showWidget;
+          if (editableRegion.status !== originalRegion.status) changes.status = editableRegion.status;
+          if (editableRegion.isCurrentDisplay !== originalRegion.isCurrentDisplay) changes.isCurrentDisplay = editableRegion.isCurrentDisplay;
+
+          // Check for candidate changes
+          const originalCandidateIds = new Set(originalRegion.candidates.map(c => c._id));
+          const editableCandidateIds = new Set(editableRegion.candidates.map(c => c._id));
+
+          let candidatesChanged = false;
+          if (originalRegion.candidates.length !== editableRegion.candidates.length) {
+            candidatesChanged = true;
+          } else {
+            for (const editableC of editableRegion.candidates) {
+              const originalC = originalRegion.candidates.find(c => c._id === editableC._id);
+              if (!originalC || JSON.stringify(editableC) !== JSON.stringify(originalC)) {
+                candidatesChanged = true;
+                break;
+              }
+            }
+          }
+
+          if (Object.keys(changes).length > 0 || candidatesChanged) {
+            const candidatesToSave = editableRegion.candidates.map(c =>
+              c._id?.startsWith('new-') ? (({ _id, ...rest }) => rest)(c) : c
+            ) as any;
+            await updateRegion(editableRegion._id, { ...changes, candidates: candidatesToSave });
+          }
+        }
       }
-      setShowRegionForm(false);
-      setEditingRegion(null);
-    } finally { setSaving(false); }
-  };
 
-  const openEditCandidate = (c: ICandidate) => {
-    setEditingCandidateId(c._id);
-    setCForm({ name: c.name, party: c.party, votes: c.votes, changeVotes: c.changeVotes, color: c.color, imageUrl: c.imageUrl || '', partySymbol: c.partySymbol || '' });
-    setShowCandidateForm(true);
-    setShowRegionForm(false);
-  };
-
-  const openAddCandidate = () => {
-    setEditingCandidateId(null);
-    setCForm(emptyC);
-    setShowCandidateForm(true);
-    setShowRegionForm(false);
-  };
-
-  const saveCandidate = async () => {
-    if (!selected) return;
-    try {
-      setSaving(true);
-      let newCandidates: ICandidate[];
-      if (editingCandidateId) {
-        newCandidates = selected.candidates.map(c =>
-          c._id === editingCandidateId ? { ...c, ...cForm } : c
-        );
-        flash('Candidate updated ✓');
-      } else {
-        const tempId = [...Array(24)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
-        newCandidates = [...selected.candidates, { ...cForm, _id: tempId }];
-        flash('Candidate added ✓');
+      // Handle deleted regions
+      for (const originalRegion of regions) {
+        if (!editableRegions.some(r => r._id === originalRegion._id)) {
+          await deleteRegion(originalRegion._id);
+        }
       }
-      await updateRegion(selected._id, { candidates: newCandidates });
-      setShowCandidateForm(false);
-      setEditingCandidateId(null);
-      setCForm(emptyC);
-    } finally { setSaving(false); }
-  };
 
-  const deleteCandidate = async (cid: string) => {
-    if (!selected || !confirm('Delete this candidate?')) return;
-    const newCandidates = selected.candidates.filter(c => c._id !== cid);
-    await updateRegion(selected._id, { candidates: newCandidates });
-    flash('Candidate deleted');
-  };
-
-  const handleDeleteRegion = async (id: string) => {
-    if (!confirm('Delete this region and all its candidates?')) return;
-    await deleteRegion(id);
-    if (selectedId === id) setSelectedId(regions.find(r => r._id !== id)?._id ?? null);
-    flash('Region deleted');
+      flash('All changes saved successfully! ✓');
+      refreshRegions(); // Re-fetch all regions to sync state
+    } catch (error) {
+      console.error('Failed to save changes:', error);
+      flash('Failed to save changes.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -595,17 +490,37 @@ function WidgetTab() {
           <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest mukta-bold flex items-center gap-2">
             <Layers size={14} className="text-blue-400" /> Regions
           </h2>
-          <button onClick={openAddRegion}
+          <button onClick={() => setShowNewRegionForm(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition mukta-bold">
             <Plus size={12} /> Add
           </button>
         </div>
 
+        {showNewRegionForm && (
+          <div className="bg-black/30 border border-white/10 rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-bold text-white mukta-bold">New Region</h4>
+              <button onClick={() => setShowNewRegionForm(false)} className="text-slate-500 hover:text-white transition"><X size={14} /></button>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">English Name</label>
+              <input value={newRegionForm.name} onChange={e => setNewRegionForm(p => ({ ...p, name: e.target.value }))}
+                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition" placeholder="Jhapa-5" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Nepali Name</label>
+              <input value={newRegionForm.nepaliName} onChange={e => setNewRegionForm(p => ({ ...p, nepaliName: e.target.value }))}
+                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition" placeholder="झापा-५" />
+            </div>
+            <button onClick={addRegion} className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition mukta-bold">Add Region</button>
+          </div>
+        )}
+
         <div className="space-y-2">
-          {regions.map(r => (
+          {editableRegions.map(r => (
             <div key={r._id}
               onClick={() => setSelectedId(r._id)}
-              className={`p-3 rounded-xl border cursor-pointer transition group ${selectedId === r._id || (!selectedId && r._id === regions[0]?._id)
+              className={`p-3 rounded-xl border cursor-pointer transition group ${selectedId === r._id || (!selectedId && r._id === editableRegions[0]?._id)
                 ? 'bg-blue-600/20 border-blue-500/50 ring-1 ring-blue-500/30'
                 : 'bg-white/[0.03] border-white/10 hover:bg-white/[0.06] hover:border-white/20'}`}>
               <div className="flex items-start justify-between gap-2">
@@ -621,11 +536,7 @@ function WidgetTab() {
                   </div>
                 </div>
                 <div className="flex gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition">
-                  <button onClick={e => { e.stopPropagation(); openEditRegion(r); }}
-                    className="p-1.5 bg-white/5 hover:bg-blue-600/40 rounded-lg text-slate-400 hover:text-white transition">
-                    <Pencil size={12} />
-                  </button>
-                  <button onClick={e => { e.stopPropagation(); handleDeleteRegion(r._id); }}
+                  <button onClick={e => { e.stopPropagation(); deleteRegionFromList(r._id); }}
                     className="p-1.5 bg-white/5 hover:bg-red-600/40 rounded-lg text-slate-400 hover:text-red-400 transition">
                     <Trash2 size={12} />
                   </button>
@@ -634,7 +545,7 @@ function WidgetTab() {
             </div>
           ))}
 
-          {regions.length === 0 && (
+          {editableRegions.length === 0 && (
             <div className="text-center py-8 text-slate-500 text-sm mukta-semibold">
               No regions yet. Add one →
             </div>
@@ -652,36 +563,40 @@ function WidgetTab() {
           </div>
         )}
 
-        {/* Region Edit Form */}
-        {showRegionForm && (
+        {/* Save All Changes button */}
+        <button onClick={saveAllChanges} disabled={saving || !hasChanges}
+          className="w-full py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 mukta-bold">
+          <Save size={14} /> {saving ? 'Saving…' : 'Save All Changes'}
+        </button>
+
+        {selected && (
           <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-5 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-white mukta-bold flex items-center gap-2">
                 <Monitor size={16} className="text-blue-400" />
-                {editingRegion ? 'Edit Region' : 'New Region'}
+                Edit Region: {selected.nepaliName}
               </h3>
-              <button onClick={() => setShowRegionForm(false)} className="text-slate-500 hover:text-white transition"><X size={16} /></button>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">English Name</label>
-                <input value={rForm.name} onChange={e => setRForm(p => ({ ...p, name: e.target.value }))}
+                <input value={selected.name} onChange={e => handleRegionChange(selected._id, 'name', e.target.value)}
                   className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition" placeholder="Jhapa-5" />
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Nepali Name</label>
-                <input value={rForm.nepaliName} onChange={e => setRForm(p => ({ ...p, nepaliName: e.target.value }))}
+                <input value={selected.nepaliName} onChange={e => handleRegionChange(selected._id, 'nepaliName', e.target.value)}
                   className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition" placeholder="झापा-५" />
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Count / Status Text</label>
-                <input type="text" value={rForm.totalCountPercent}
-                  onChange={e => setRForm(p => ({ ...p, totalCountPercent: e.target.value as any }))}
+                <input type="text" value={selected.totalCountPercent ?? ''}
+                  onChange={e => handleRegionChange(selected._id, 'totalCountPercent', e.target.value as any)}
                   className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition" placeholder="e.g. 45% or Counting" />
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Status</label>
-                <select value={rForm.status} onChange={e => setRForm(p => ({ ...p, status: e.target.value as any }))}
+                <select value={selected.status} onChange={e => handleRegionChange(selected._id, 'status', e.target.value as any)}
                   className="w-full px-3 py-2 bg-[#0a1120] border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition">
                   <option value="pending">Pending</option>
                   <option value="active">Active</option>
@@ -689,37 +604,24 @@ function WidgetTab() {
                 </select>
               </div>
             </div>
-            {editingRegion && (
-              <div className="flex items-center gap-2">
-                <input type="checkbox" id="onair" checked={editingRegion.isCurrentDisplay}
-                  onChange={async e => {
-                    if (e.target.checked) { await setDisplayRegion(editingRegion._id); flash('Set as On-Air ✓'); }
-                  }}
-                  className="w-4 h-4 accent-blue-500" />
-                <label htmlFor="onair" className="text-sm text-slate-300 mukta-semibold cursor-pointer">Set as ON AIR (public display)</label>
-              </div>
-            )}
-            <div className="flex items-center gap-2 mt-2">
-              <input type="checkbox" id="showwidget" checked={rForm.showWidget}
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id={`onair-${selected._id}`} checked={selected.isCurrentDisplay}
                 onChange={async e => {
-                  const checked = e.target.checked;
-                  setRForm(p => ({ ...p, showWidget: checked }));
-                  if (editingRegion) {
-                    await updateRegion(editingRegion._id, { ...rForm, showWidget: checked });
-                    flash(`Widget ${checked ? 'shown' : 'hidden'} ✓`);
-                  }
+                  handleRegionChange(selected._id, 'isCurrentDisplay', e.target.checked);
+                  if (e.target.checked) { await setDisplayRegion(selected._id); flash('Set as On-Air ✓'); }
                 }}
                 className="w-4 h-4 accent-blue-500" />
-              <label htmlFor="showwidget" className="text-sm text-slate-300 mukta-semibold cursor-pointer">Show Election Widget on UI</label>
+              <label htmlFor={`onair-${selected._id}`} className="text-sm text-slate-300 mukta-semibold cursor-pointer">Set as ON AIR (public display)</label>
             </div>
-            <button onClick={saveRegion} disabled={saving}
-              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 mukta-bold">
-              <Save size={14} /> {saving ? 'Saving…' : 'Save Region'}
-            </button>
+            <div className="flex items-center gap-2 mt-2">
+              <input type="checkbox" id={`showwidget-${selected._id}`} checked={selected.showWidget}
+                onChange={e => handleRegionChange(selected._id, 'showWidget', e.target.checked)}
+                className="w-4 h-4 accent-blue-500" />
+              <label htmlFor={`showwidget-${selected._id}`} className="text-sm text-slate-300 mukta-semibold cursor-pointer">Show Election Widget on UI</label>
+            </div>
           </div>
         )}
 
-        {/* Candidates panel */}
         {selected && (
           <div className="bg-white/[0.04] border border-white/10 rounded-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
@@ -731,48 +633,41 @@ function WidgetTab() {
                 <p className="text-[11px] text-slate-500 mt-0.5">{selected.candidates.length} candidates</p>
               </div>
               <div className="flex gap-2">
-                {!selected.isCurrentDisplay && (
-                  <button onClick={() => setDisplayRegion(selected._id)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600/30 hover:bg-amber-600/50 text-amber-300 text-xs font-bold rounded-lg transition mukta-bold border border-amber-600/40">
-                    <Eye size={11} /> Set On-Air
-                  </button>
-                )}
-                <button onClick={openAddCandidate}
+                <button onClick={() => setShowNewCandidateForm(true)}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg transition mukta-bold">
                   <Plus size={12} /> Add Candidate
                 </button>
               </div>
             </div>
 
-            {/* Candidate form */}
-            {showCandidateForm && (
+            {showNewCandidateForm && (
               <div className="m-4 bg-black/30 border border-white/10 rounded-xl p-4 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-white mukta-bold">{editingCandidateId ? 'Edit Candidate' : 'New Candidate'}</h4>
-                  <button onClick={() => { setShowCandidateForm(false); setEditingCandidateId(null); }} className="text-slate-500 hover:text-white transition"><X size={14} /></button>
+                  <h4 className="text-sm font-bold text-white mukta-bold">New Candidate</h4>
+                  <button onClick={() => { setShowNewCandidateForm(false); setNewCandidateForm(emptyC); }} className="text-slate-500 hover:text-white transition"><X size={14} /></button>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="col-span-2">
                     <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Full Name (Nepali)</label>
-                    <input value={cForm.name} onChange={e => setCForm(p => ({ ...p, name: e.target.value }))}
+                    <input value={newCandidateForm.name} onChange={e => setNewCandidateForm(p => ({ ...p, name: e.target.value }))}
                       className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition" placeholder="केपी शर्मा ओली" />
                   </div>
                   <div>
                     <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Party</label>
-                    <input value={cForm.party} onChange={e => setCForm(p => ({ ...p, party: e.target.value }))}
+                    <input value={newCandidateForm.party} onChange={e => setNewCandidateForm(p => ({ ...p, party: e.target.value }))}
                       className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition" placeholder="CPN-UML" />
                   </div>
                   <div className="col-span-2">
                     <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Party Flag Image</label>
-                    <ImageInput value={cForm.partySymbol} onChange={v => setCForm(p => ({ ...p, partySymbol: v }))} />
+                    <ImageInput value={newCandidateForm.partySymbol} onChange={v => setNewCandidateForm(p => ({ ...p, partySymbol: v }))} />
                   </div>
                   <div>
                     <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Total Votes</label>
                     <input
                       type="text"
                       inputMode="numeric"
-                      value={toNepali(cForm.votes)}
-                      onChange={e => setCForm(p => ({ ...p, votes: parseNepaliInt(e.target.value) }))}
+                      value={toNepali(newCandidateForm.votes)}
+                      onChange={e => setNewCandidateForm(p => ({ ...p, votes: parseNepaliInt(e.target.value) }))}
                       className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition mukta-bold"
                       placeholder="०"
                     />
@@ -782,8 +677,8 @@ function WidgetTab() {
                     <input
                       type="text"
                       inputMode="numeric"
-                      value={toNepali(cForm.changeVotes)}
-                      onChange={e => setCForm(p => ({ ...p, changeVotes: parseNepaliInt(e.target.value) }))}
+                      value={toNepali(newCandidateForm.changeVotes)}
+                      onChange={e => setNewCandidateForm(p => ({ ...p, changeVotes: parseNepaliInt(e.target.value) }))}
                       className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition mukta-bold"
                       placeholder="०"
                     />
@@ -791,20 +686,20 @@ function WidgetTab() {
                   <div>
                     <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Party Color</label>
                     <div className="flex gap-2 items-center">
-                      <input type="color" value={cForm.color} onChange={e => setCForm(p => ({ ...p, color: e.target.value }))}
+                      <input type="color" value={newCandidateForm.color} onChange={e => setNewCandidateForm(p => ({ ...p, color: e.target.value }))}
                         className="w-10 h-9 rounded-lg border border-white/10 cursor-pointer bg-transparent" />
-                      <input value={cForm.color} onChange={e => setCForm(p => ({ ...p, color: e.target.value }))}
+                      <input value={newCandidateForm.color} onChange={e => setNewCandidateForm(p => ({ ...p, color: e.target.value }))}
                         className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition" />
                     </div>
                   </div>
                   <div className="col-span-2">
                     <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Photo</label>
-                    <ImageInput value={cForm.imageUrl} onChange={v => setCForm(p => ({ ...p, imageUrl: v }))} />
+                    <ImageInput value={newCandidateForm.imageUrl} onChange={v => setNewCandidateForm(p => ({ ...p, imageUrl: v }))} />
                   </div>
                 </div>
-                <button onClick={saveCandidate} disabled={saving}
-                  className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 mukta-bold">
-                  <Save size={14} /> {saving ? 'Saving…' : 'Save Candidate'}
+                <button onClick={() => addCandidateToRegion(selected._id)}
+                  className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 mukta-bold">
+                  <Plus size={14} /> Add Candidate
                 </button>
               </div>
             )}
@@ -814,36 +709,61 @@ function WidgetTab() {
               {selected.candidates.length === 0 && (
                 <div className="px-5 py-8 text-center text-slate-500 text-sm mukta-semibold">No candidates yet. Add one above.</div>
               )}
-              {selected.candidates.map(c => (
-                <div key={c._id} className="px-5 py-3.5 flex items-center gap-4 hover:bg-white/[0.02] transition group">
-                  <div className="w-1 h-12 rounded-full flex-shrink-0" style={{ backgroundColor: c.color }} />
-                  {c.imageUrl ? (
-                    <img src={c.imageUrl} alt={c.name} className="w-10 h-10 rounded-full object-cover border border-white/10 flex-shrink-0" />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-lg flex-shrink-0" style={{ background: c.color + '22' }}>
-                      {c.name.charAt(0)}
+              {selected.candidates.map((c: ICandidate) => (
+                <div key={c._id} className="p-4 space-y-3 hover:bg-white/[0.02] transition">
+                  {/* Header row: color dot + preview images + delete */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full border border-white/20 flex-shrink-0" style={{ backgroundColor: c.color }} />
+                      {c.imageUrl && <img src={c.imageUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-white/10" />}
+                      {c.partySymbol && <img src={c.partySymbol} alt="" className="w-7 h-7 rounded-full object-cover border border-white/10" />}
                     </div>
-                  )}
-                  {c.partySymbol && (
-                    <img src={c.partySymbol} alt={c.party} className="w-6 h-6 rounded-full object-cover border border-white/10 sm:hidden md:block flex-shrink-0" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-white text-sm mukta-bold truncate">{c.name}</p>
-                    <p className="text-[11px] text-slate-400">{c.party}</p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="font-black text-white text-base mukta-extrabold tabular-nums">{formatNepaliVotes(c.votes)}</p>
-                    <p className="text-[11px] text-emerald-400 font-bold">▲ {toNepali(c.changeVotes)}</p>
-                  </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
-                    <button onClick={() => openEditCandidate(c)}
-                      className="p-1.5 bg-white/5 hover:bg-blue-600/40 rounded-lg text-slate-400 hover:text-white transition">
-                      <Pencil size={12} />
-                    </button>
-                    <button onClick={() => deleteCandidate(c._id)}
-                      className="p-1.5 bg-white/5 hover:bg-red-600/40 rounded-lg text-slate-400 hover:text-red-400 transition">
+                    <button onClick={() => deleteCandidateFromRegion(selected._id, c._id)}
+                      className="p-1.5 bg-white/5 hover:bg-red-600/40 rounded-lg text-slate-500 hover:text-red-400 transition">
                       <Trash2 size={12} />
                     </button>
+                  </div>
+                  {/* Fields grid */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="col-span-2">
+                      <label className="text-[10px] font-bold text-slate-500 block mb-1 mukta-bold uppercase">Full Name</label>
+                      <input value={c.name} onChange={e => handleCandidateChange(selected._id, c._id, 'name', e.target.value)}
+                        className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition mukta-bold" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 block mb-1 mukta-bold uppercase">Party</label>
+                      <input value={c.party} onChange={e => handleCandidateChange(selected._id, c._id, 'party', e.target.value)}
+                        className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 block mb-1 mukta-bold uppercase">Color</label>
+                      <div className="flex gap-1 items-center">
+                        <input type="color" value={c.color} onChange={e => handleCandidateChange(selected._id, c._id, 'color', e.target.value)}
+                          className="w-9 h-8 rounded border border-white/10 cursor-pointer bg-transparent flex-shrink-0" />
+                        <input value={c.color} onChange={e => handleCandidateChange(selected._id, c._id, 'color', e.target.value)}
+                          className="flex-1 px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-xs focus:outline-none focus:border-purple-500" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 block mb-1 mukta-bold uppercase">Total Votes</label>
+                      <input type="text" inputMode="numeric" value={toNepali(c.votes)}
+                        onChange={e => handleCandidateChange(selected._id, c._id, 'votes', parseNepaliInt(e.target.value))}
+                        className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition mukta-bold" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 block mb-1 mukta-bold uppercase">Vote Change</label>
+                      <input type="text" inputMode="numeric" value={toNepali(c.changeVotes)}
+                        onChange={e => handleCandidateChange(selected._id, c._id, 'changeVotes', parseNepaliInt(e.target.value))}
+                        className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition mukta-bold" />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-[10px] font-bold text-slate-500 block mb-1 mukta-bold uppercase">Party Flag / Logo</label>
+                      <ImageInput value={c.partySymbol || ''} onChange={v => handleCandidateChange(selected._id, c._id, 'partySymbol', v)} />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-[10px] font-bold text-slate-500 block mb-1 mukta-bold uppercase">Candidate Photo</label>
+                      <ImageInput value={c.imageUrl || ''} onChange={v => handleCandidateChange(selected._id, c._id, 'imageUrl', v)} />
+                    </div>
                   </div>
                 </div>
               ))}
