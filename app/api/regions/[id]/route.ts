@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import ElectionRegion from '@/models/ElectionRegion';
+import { socketEmit } from '@/app/lib/socketEmit';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,11 +45,8 @@ export async function PUT(
         if (!updated) return NextResponse.json({ error: 'Region not found' }, { status: 404 });
 
         // Emit socket event
-        const io = (globalThis as any)._io;
-        if (io) {
-            const all = await ElectionRegion.find({}).sort({ createdAt: 1 }).lean();
-            io.emit('regions:updated', all);
-        }
+        const all = await ElectionRegion.find({}).sort({ createdAt: 1 }).lean();
+        await socketEmit('regions:updated', all);
 
         return NextResponse.json(updated);
     } catch (error) {
@@ -69,11 +67,8 @@ export async function DELETE(
         if (!deleted) return NextResponse.json({ error: 'Region not found' }, { status: 404 });
 
         // Emit socket event
-        const io = (globalThis as any)._io;
-        if (io) {
-            const all = await ElectionRegion.find({}).sort({ createdAt: 1 }).lean();
-            io.emit('regions:updated', all);
-        }
+        const all = await ElectionRegion.find({}).sort({ createdAt: 1 }).lean();
+        await socketEmit('regions:updated', all);
 
         return NextResponse.json({ success: true });
     } catch (error) {

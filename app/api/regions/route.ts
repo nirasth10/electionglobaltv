@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import ElectionRegion from '@/models/ElectionRegion';
+import { socketEmit } from '@/app/lib/socketEmit';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,11 +29,8 @@ export async function POST(request: NextRequest) {
         });
 
         // Emit socket event
-        const io = (globalThis as any)._io;
-        if (io) {
-            const all = await ElectionRegion.find({}).sort({ createdAt: 1 }).lean();
-            io.emit('regions:updated', all);
-        }
+        const all = await ElectionRegion.find({}).sort({ createdAt: 1 }).lean();
+        await socketEmit('regions:updated', all);
 
         return NextResponse.json(region, { status: 201 });
     } catch (error) {

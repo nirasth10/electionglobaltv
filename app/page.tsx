@@ -17,12 +17,12 @@ export default function ElectionDisplayPage() {
   // On Vercel (no socket server), treat polling as "live"
   const isLive = connected || socketUnavailable;
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      window.location.reload();
-    }, 50000);
-    return () => clearInterval(timer);
-  }, []);
+  // useEffect(() => {
+  //   const timer = setInterval(() => {
+  //     window.location.reload();
+  //   }, 50000);
+  //   return () => clearInterval(timer);
+  // }, []);
 
   if (isLoading) {
     return (

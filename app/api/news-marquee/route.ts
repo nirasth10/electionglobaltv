@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import NewsMarquee from '@/models/NewsMarquee';
+import { socketEmit } from '@/app/lib/socketEmit';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,10 +26,7 @@ export async function POST(req: NextRequest) {
         const newItem = new NewsMarquee({ ...body, order: nextOrder });
         await newItem.save();
 
-        const io = (globalThis as any)._io;
-        if (io) {
-            io.emit('news_marquee_updated');
-        }
+        await socketEmit('news_marquee_updated');
 
         return NextResponse.json(newItem, { status: 201 });
     } catch (error) {

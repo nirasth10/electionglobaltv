@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import NewsMarquee from '@/models/NewsMarquee';
+import { socketEmit } from '@/app/lib/socketEmit';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,10 +21,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
             return NextResponse.json({ error: 'News not found' }, { status: 404 });
         }
 
-        const io = (globalThis as any)._io;
-        if (io) {
-            io.emit('news_marquee_updated');
-        }
+        await socketEmit('news_marquee_updated');
 
         return NextResponse.json(updatedItem);
     } catch (error) {
@@ -42,10 +40,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
             return NextResponse.json({ error: 'News not found' }, { status: 404 });
         }
 
-        const io = (globalThis as any)._io;
-        if (io) {
-            io.emit('news_marquee_updated');
-        }
+        await socketEmit('news_marquee_updated');
 
         return NextResponse.json({ message: 'News deleted successfully' });
     } catch (error) {

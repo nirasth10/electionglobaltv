@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import NewsMarqueeSettings from '@/models/NewsMarqueeSettings';
+import { socketEmit } from '@/app/lib/socketEmit';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,10 +31,7 @@ export async function PUT(req: NextRequest) {
             settings = await NewsMarqueeSettings.create({ heading: body.heading });
         }
 
-        const io = (globalThis as any)._io;
-        if (io) {
-            io.emit('news_marquee_updated'); // Use same event for settings
-        }
+        await socketEmit('news_marquee_updated');
 
         return NextResponse.json(settings);
     } catch (error) {
