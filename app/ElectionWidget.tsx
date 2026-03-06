@@ -1,6 +1,7 @@
 'use client';
 
 import { useElection } from '@/app/context/ElectionContext';
+import { formatNepaliVotes } from '@/app/lib/nepali';
 
 export default function ElectionWidget() {
     const { currentRegion } = useElection();
@@ -85,7 +86,7 @@ export default function ElectionWidget() {
                             {/* Votes */}
                             <div className="text-right w-20 sm:w-24 flex-shrink-0">
                                 <div className="text-lg sm:text-2xl font-black text-white tabular-nums tracking-tighter leading-none mukta-extrabold">
-                                    {candidate.votes.toLocaleString()}
+                                    {formatNepaliVotes(candidate.votes)}
                                 </div>
                                 {/* <div className="text-[9px] sm:text-[11px] font-bold text-emerald-400 mukta-bold mt-0.5">▲ {candidate.changeVotes}</div> */}
                             </div>

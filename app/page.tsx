@@ -44,13 +44,13 @@ export default function ElectionDisplayPage() {
       <BreakingNews />
 
       {/* Live connection indicator */}
-      <div className="fixed top-3 left-3 z-40 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-black/50 backdrop-blur border border-white/10 text-[10px] font-bold mukta-bold">
+      {/* <div className="fixed top-3 left-3 z-40 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-black/50 backdrop-blur border border-white/10 text-[10px] font-bold mukta-bold">
         {isLive ? (
           <><Wifi size={10} className="text-emerald-400" /><span className="text-emerald-400">LIVE</span></>
         ) : (
           <><WifiOff size={10} className="text-red-400" /><span className="text-red-400">Offline</span></>
         )}
-      </div>
+      </div> */}
 
       {/* Main election widget */}
       <ElectionWidget />

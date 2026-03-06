@@ -14,6 +14,7 @@ import {
   CheckCircle2, Clock, AlertTriangle, TrendingUp, Wifi, WifiOff,
   RefreshCw, Users, Layers, ToggleLeft, ToggleRight, ArrowLeft, MessageSquare,
 } from 'lucide-react';
+import { formatNepaliVotes, parseNepaliInt, toNepali } from '@/app/lib/nepali';
 
 // ─── Image Upload Helper ───────────────────────────────────────────────────────
 async function uploadImage(file: File): Promise<string> {
@@ -386,13 +387,25 @@ function WidgetTab() {
                   </div>
                   <div>
                     <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Total Votes</label>
-                    <input type="number" value={cForm.votes} onChange={e => setCForm(p => ({ ...p, votes: parseInt(e.target.value) || 0 }))}
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition" />
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={toNepali(cForm.votes)}
+                      onChange={e => setCForm(p => ({ ...p, votes: parseNepaliInt(e.target.value) }))}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition mukta-bold"
+                      placeholder="०"
+                    />
                   </div>
                   <div>
                     <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Vote Change</label>
-                    <input type="number" value={cForm.changeVotes} onChange={e => setCForm(p => ({ ...p, changeVotes: parseInt(e.target.value) || 0 }))}
-                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition" />
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={toNepali(cForm.changeVotes)}
+                      onChange={e => setCForm(p => ({ ...p, changeVotes: parseNepaliInt(e.target.value) }))}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition mukta-bold"
+                      placeholder="०"
+                    />
                   </div>
                   <div>
                     <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Party Color</label>
@@ -438,8 +451,8 @@ function WidgetTab() {
                     <p className="text-[11px] text-slate-400">{c.party}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="font-black text-white text-base mukta-extrabold tabular-nums">{c.votes.toLocaleString()}</p>
-                    <p className="text-[11px] text-emerald-400 font-bold">▲ {c.changeVotes}</p>
+                    <p className="font-black text-white text-base mukta-extrabold tabular-nums">{formatNepaliVotes(c.votes)}</p>
+                    <p className="text-[11px] text-emerald-400 font-bold">▲ {toNepali(c.changeVotes)}</p>
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
                     <button onClick={() => openEditCandidate(c)}
@@ -599,13 +612,25 @@ function TickerTab() {
             </div>
             <div>
               <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Votes</label>
-              <input type="number" value={form.votes} onChange={e => setForm(p => ({ ...p, votes: parseInt(e.target.value) || 0 }))}
-                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500 transition" />
+              <input
+                type="text"
+                inputMode="numeric"
+                value={toNepali(form.votes)}
+                onChange={e => setForm(p => ({ ...p, votes: parseNepaliInt(e.target.value) }))}
+                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500 transition mukta-bold"
+                placeholder="०"
+              />
             </div>
             <div>
               <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Vote Change</label>
-              <input type="number" value={form.changeVotes} onChange={e => setForm(p => ({ ...p, changeVotes: parseInt(e.target.value) || 0 }))}
-                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500 transition" />
+              <input
+                type="text"
+                inputMode="numeric"
+                value={toNepali(form.changeVotes)}
+                onChange={e => setForm(p => ({ ...p, changeVotes: parseNepaliInt(e.target.value) }))}
+                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500 transition mukta-bold"
+                placeholder="०"
+              />
             </div>
             <div className="col-span-2">
               <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Party Flag Image (optional)</label>

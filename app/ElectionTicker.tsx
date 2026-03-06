@@ -4,6 +4,7 @@ import { useTicker } from '@/app/context/TickerContext';
 import Link from 'next/link';
 import { useElection } from './context/ElectionContext';
 import { useNews } from '@/app/context/NewsContext';
+import { formatNepaliVotes } from '@/app/lib/nepali';
 
 const ElectionTicker = () => {
   const { activeItems } = useTicker();
@@ -55,7 +56,7 @@ const ElectionTicker = () => {
                   />
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase mukta-semibold">{item.label} {item.region}</p>
+                  {/* <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase mukta-semibold">{item.label} {item.region}</p> */}
                   <h3 className="text-sm sm:text-base font-black text-white mukta-extrabold leading-none group-hover:text-blue-300 transition-colors truncate">
                     {item.party}
                   </h3>
@@ -63,7 +64,7 @@ const ElectionTicker = () => {
                 </div>
                 <div className="text-right flex-shrink-0">
                   <div className="text-base sm:text-lg font-black text-white tabular-nums tracking-tighter mukta-extrabold leading-none">
-                    {item.votes.toLocaleString()}
+                    {formatNepaliVotes(item.votes)}
                   </div>
                   <p className="text-[8px] sm:text-[9px] text-slate-500 font-bold uppercase mukta-bold">Votes</p>
                 </div>
