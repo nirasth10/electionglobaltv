@@ -20,13 +20,13 @@ export default function ElectionDisplayPage() {
   useEffect(() => {
     const timer = setInterval(() => {
       window.location.reload();
-    }, 5000);
+    }, 50000);
     return () => clearInterval(timer);
   }, []);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center">
+      <div className="min-h-screen w-full flex items-center justify-center bg-[#1c3765]">
         <div className="text-white text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <p className="text-xl font-semibold mukta-semibold text-slate-300">Loading election data…</p>
@@ -37,7 +37,7 @@ export default function ElectionDisplayPage() {
 
   if (!currentRegion) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center">
+      <div className="min-h-screen w-full flex items-center justify-center bg-[#1c3765]">
         <div className="text-white text-center space-y-4">
           <p className="text-xl text-slate-400 mukta-semibold">No election data available.</p>
           <Link href="/dashboard" className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl font-bold transition mukta-bold">
@@ -49,7 +49,7 @@ export default function ElectionDisplayPage() {
   }
 
   return (
-    <div className="min-h-screen w-full pb-24 bg-transparent text-white">
+    <div className="min-h-screen w-full pb-24 bg-[#1c3765] text-white">
       <NewsMarquee />
       <ElectionTicker />
       <BreakingNews />
