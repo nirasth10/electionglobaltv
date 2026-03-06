@@ -13,7 +13,7 @@ export default function ElectionWidget() {
 
     return (
         <div className="fixed top-4 z-50 font-sans antialiased mukta-regular" style={{ right: '20px' }}>
-            <div className="w-[calc(100vw-2rem)] sm:w-[360px] max-h-[calc(100vh-130px)] bg-[#063522] border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden" style={{ marginTop: '160px' }}>
+            <div className="w-[calc(100vw-2rem)] sm:w-[360px] max-h-[calc(100vh-130px)] bg-[#063522] border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden" style={{ marginTop: '200px' }}>
                 {/* Header */}
                 <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-white/5 bg-gradient-to-r from-white/[0.03] to-transparent">
                     <div className="flex justify-between items-center gap-2">
@@ -32,7 +32,7 @@ export default function ElectionWidget() {
                 </div>
 
                 {/* Candidate list */}
-                <div className="p-2 sm:p-3 space-y-1.5 overflow-y-auto flex-1">
+                <div className="p-2 sm:p-2.5 space-y-1.5 overflow-y-auto overflow-x-hidden">
                     {currentRegion.candidates.map((candidate) => (
                         <div
                             key={candidate._id}

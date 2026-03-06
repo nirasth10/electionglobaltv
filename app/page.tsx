@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useElection } from '@/app/context/ElectionContext';
 import { useSocket } from '@/app/context/SocketContext';
 import ElectionTicker from './ElectionTicker';
@@ -15,6 +16,13 @@ export default function ElectionDisplayPage() {
   const { connected, socketUnavailable } = useSocket();
   // On Vercel (no socket server), treat polling as "live"
   const isLive = connected || socketUnavailable;
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      window.location.reload();
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
 
   if (isLoading) {
     return (
