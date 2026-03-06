@@ -2,65 +2,68 @@
 
 import { useNewsMarquee } from '@/app/context/NewsMarqueeContext';
 
+import { useState, useEffect } from 'react';
+
 const NewsMarquee = () => {
     const { activeItems, heading } = useNewsMarquee();
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    useEffect(() => {
+        if (activeItems.length <= 1) return;
+
+        const interval = setInterval(() => {
+            setCurrentIndex((prev) => (prev + 1) % activeItems.length);
+        }, 10000); // 10 seconds
+
+        return () => clearInterval(interval);
+    }, [activeItems.length]);
 
     if (activeItems.length === 0) return null;
 
-    // Split heading by spaces to place them on new lines if needed, 
-    // or just render it as is. The image shows:
-    // ELECTION
-    // UPDATE
-    // 2082
     const headingWords = heading.split(' ');
-
-    const totalChars = activeItems.reduce((sum, item) => sum + item.text.length, 0);
-    const marqueeDuration = Math.max(30, Math.round(totalChars * 0.15));
+    const currentItem = activeItems[currentIndex];
 
     return (
-        <div className="fixed bottom-[116px] sm:bottom-[144px] left-lg left-0 w-full z-40 bg-[#e4e4e4] shadow-md flex overflow-hidden h-12 sm:h-[54px] font-sans antialiased border-y-[2px] border-[#0a1120]/50">
+        <div className="fixed left-0 w-full z-40 bg-[#e4e4e4] shadow-md flex overflow-hidden font-sans antialiased border-y-[2px] border-[#0a1120]/50" style={{ bottom: '166px', height: '80px' }}>
             {/* Heading Section */}
             <div className="bg-white flex flex-col justify-center px-3 sm:px-6 flex-shrink-0 z-20 relative shadow-[4px_0_10px_rgba(0,0,0,0.15)] h-full min-w-[110px] sm:min-w-[170px] border-r border-[#0a1120]/20">
-                <h1 className="text-[10px] sm:text-[14px] font-black leading-[1.1] text-[#b91c1c] uppercase tracking-wide mukta-extrabold text-left">
+                <h1 className="font-black leading-[1.1] text-[#b91c1c] uppercase tracking-wide mukta-extrabold text-left" style={{ fontSize: '20px' }}>
                     {headingWords.map((word, i) => (
                         <span key={i} className="block">{word}</span>
                     ))}
                 </h1>
             </div>
 
-            {/* Ticker Section */}
-            <div className="flex-1 flex items-center overflow-hidden relative bg-[#e4e4e4]">
-                <div
-                    className="whitespace-nowrap flex absolute animate-marquee2 h-full items-center"
-                    style={{ animationDuration: `${marqueeDuration}s` }}
-                >
-                    {activeItems.map((item, index) => (
-                        <span key={`${item._id}-${index}`} className="flex items-center text-[#0a1120] text-[15px] sm:text-[20px] font-bold mukta-bold leading-none translate-y-[2px]">
-                            {index > 0 && (
-                                <span className="inline-block w-8 sm:w-16"></span>
-                            )}
-                            {item.text}
-                            <span className="inline-block w-8 sm:w-16"></span>
-                            <span className="text-[#b91c1c] text-xs">◆</span>
-                        </span>
-                    ))}
+            {/* Flipper Section */}
+            <div className="flex-1 flex items-center overflow-hidden relative bg-[#e4e4e4] px-6">
+                <div key={currentItem._id} className="flex w-full animate-flip-up items-center">
+                    <span className="flex items-center text-[#0a1120] font-bold mukta-bold leading-none translate-y-[2px]" style={{ fontSize: '40px' }}>
+                        {currentItem.text}
+                    </span>
                 </div>
             </div>
 
             <style jsx>{`
-                @keyframes marquee2 {
-                    0% { transform: translateX(100vw); }
-                    100% { transform: translateX(-100%); }
+                @keyframes flip-up {
+                    0% {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    10% {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                    90% {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                    100% {
+                        opacity: 0;
+                        transform: translateY(-20px);
+                    }
                 }
-                .animate-marquee2 {
-                    left: 0;
-                    animation-name: marquee2;
-                    animation-timing-function: linear;
-                    animation-iteration-count: infinite;
-                    width: max-content;
-                }
-                .animate-marquee2:hover {
-                    animation-play-state: paused;
+                .animate-flip-up {
+                    animation: flip-up 10s ease-in-out infinite;
                 }
             `}</style>
         </div>

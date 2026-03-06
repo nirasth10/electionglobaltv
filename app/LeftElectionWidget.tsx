@@ -1,26 +1,26 @@
 'use client';
 
-import { useElection } from '@/app/context/ElectionContext';
+import { useLeftElection } from '@/app/context/LeftElectionContext';
 import { formatNepaliVotes } from '@/app/lib/nepali';
 
-export default function ElectionWidget() {
-    const { currentRegion } = useElection();
+export default function LeftElectionWidget() {
+    const { currentLeftRegion } = useLeftElection();
 
-    if (!currentRegion) return null;
+    if (!currentLeftRegion) return null;
 
     // Hide widget if showWidget is explicitly set to false (defaults to true if undefined)
-    if (currentRegion.showWidget === false) return null;
+    if (currentLeftRegion.showWidget === false) return null;
 
     return (
-        <div className="fixed top-4 z-50 font-sans antialiased mukta-regular" style={{ right: '20px' }}>
+        <div className="fixed top-4 z-50 font-sans antialiased mukta-regular" style={{ left: '20px' }}>
             <div className="w-[calc(100vw-2rem)] sm:w-[360px] max-h-[calc(100vh-130px)] bg-[#0a1120]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden" style={{ marginTop: '160px' }}>
                 {/* Header */}
                 <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-white/5 bg-gradient-to-r from-white/[0.03] to-transparent">
                     <div className="flex justify-between items-center gap-2">
                         <div className="min-w-0 flex-1">
                             <p className="text-[10px] sm:text-[11px] font-bold text-blue-400 uppercase tracking-[0.2em] mb-1 mukta-semibold">निर्वाचन क्षेत्र</p>
-                            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mukta-extrabold truncate">{currentRegion.nepaliName}</h1>
-                            <p className="text-[10px] text-slate-500 mukta-semibold mt-0.5">{currentRegion.name}</p>
+                            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mukta-extrabold truncate">{currentLeftRegion.nepaliName}</h1>
+                            <p className="text-[10px] text-slate-500 mukta-semibold mt-0.5">{currentLeftRegion.name}</p>
                         </div>
                     </div>
                 </div>
@@ -33,7 +33,7 @@ export default function ElectionWidget() {
 
                 {/* Candidate list */}
                 <div className="p-2 sm:p-3 space-y-1.5 overflow-y-auto flex-1">
-                    {currentRegion.candidates.map((candidate) => (
+                    {currentLeftRegion.candidates.map((candidate) => (
                         <div
                             key={candidate._id}
                             className="flex items-center p-2 sm:p-3 rounded-xl hover:bg-white/[0.05] transition-colors group gap-3"

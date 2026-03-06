@@ -6,6 +6,7 @@ import ElectionTicker from './ElectionTicker';
 import BreakingNews from './BreakingNews';
 import NewsMarquee from './NewsMarquee';
 import ElectionWidget from './ElectionWidget';
+import LeftElectionWidget from './LeftElectionWidget';
 import Link from 'next/link';
 import { Wifi, WifiOff } from 'lucide-react';
 
@@ -55,6 +56,7 @@ export default function ElectionDisplayPage() {
       </div> */}
 
       {/* Main election widget */}
+      <LeftElectionWidget />
       <ElectionWidget />
     </div>
   );

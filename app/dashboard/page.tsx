@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { useElection, IElectionRegion, ICandidate } from '@/app/context/ElectionContext';
+import { useLeftElection, ILeftElectionRegion, ILeftCandidate } from '@/app/context/LeftElectionContext';
 import { useTicker, ITickerItem } from '@/app/context/TickerContext';
 import { useNews, INewsItem } from '@/app/context/NewsContext';
 import { useNewsMarquee, INewsMarqueeItem } from '@/app/context/NewsMarqueeContext';
@@ -97,7 +98,385 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-// ─── Widget Tab ────────────────────────────────────────────────────────────────
+// ─── Left Widget Tab ────────────────────────────────────────────────────────────
+function LeftWidgetTab() {
+  const { leftRegions: regions, refreshLeftRegions: refreshRegions, createRegion, updateRegion, deleteRegion, setDisplayRegion } = useLeftElection();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showRegionForm, setShowRegionForm] = useState(false);
+  const [editingCandidateId, setEditingCandidateId] = useState<string | null>(null);
+  const [showCandidateForm, setShowCandidateForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  const flash = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 2500); };
+
+  const selected = regions.find(r => r._id === selectedId) ?? regions[0];
+
+  useEffect(() => {
+    if (!selectedId && regions.length > 0) setSelectedId(regions[0]._id);
+  }, [regions, selectedId]);
+
+  const [rForm, setRForm] = useState({ name: '', nepaliName: '', totalCountPercent: '' as any, showWidget: true, status: 'active' as 'active' | 'completed' | 'pending' });
+  const [editingRegion, setEditingRegion] = useState<ILeftElectionRegion | null>(null);
+
+  // Candidate form state
+  const emptyC = { name: '', party: '', votes: 0, changeVotes: 0, color: '#3b82f6', imageUrl: '', partySymbol: '' };
+  const [cForm, setCForm] = useState(emptyC);
+
+  const openEditRegion = (r: ILeftElectionRegion) => {
+    setEditingRegion(r);
+    setRForm({
+      name: r.name,
+      nepaliName: r.nepaliName,
+      totalCountPercent: r.totalCountPercent ?? '',
+      showWidget: r.showWidget === undefined ? true : Boolean(r.showWidget),
+      status: r.status
+    });
+    setShowRegionForm(true);
+    setShowCandidateForm(false);
+  };
+
+  const openAddRegion = () => {
+    setEditingRegion(null);
+    setRForm({ name: '', nepaliName: '', totalCountPercent: '' as any, showWidget: true, status: 'active' });
+    setShowRegionForm(true);
+    setShowCandidateForm(false);
+  };
+
+  const saveRegion = async () => {
+    try {
+      setSaving(true);
+      if (editingRegion) {
+        await updateRegion(editingRegion._id, rForm);
+        flash('Region updated ✓');
+      } else {
+        await createRegion({ ...rForm, candidates: [], isCurrentDisplay: regions.length === 0 });
+        flash('Region created ✓');
+      }
+      setShowRegionForm(false);
+      setEditingRegion(null);
+    } finally { setSaving(false); }
+  };
+
+  const openEditCandidate = (c: ILeftCandidate) => {
+    setEditingCandidateId(c._id);
+    setCForm({ name: c.name, party: c.party, votes: c.votes, changeVotes: c.changeVotes, color: c.color, imageUrl: c.imageUrl || '', partySymbol: c.partySymbol || '' });
+    setShowCandidateForm(true);
+    setShowRegionForm(false);
+  };
+
+  const openAddCandidate = () => {
+    setEditingCandidateId(null);
+    setCForm(emptyC);
+    setShowCandidateForm(true);
+    setShowRegionForm(false);
+  };
+
+  const saveCandidate = async () => {
+    if (!selected) return;
+    try {
+      setSaving(true);
+      let newCandidates: ILeftCandidate[];
+      if (editingCandidateId) {
+        newCandidates = selected.candidates.map((c: ILeftCandidate) =>
+          c._id === editingCandidateId ? { ...c, ...cForm } : c
+        );
+        flash('Candidate updated ✓');
+      } else {
+        const tempId = [...Array(24)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+        newCandidates = [...selected.candidates, { ...cForm, _id: tempId }];
+        flash('Candidate added ✓');
+      }
+      await updateRegion(selected._id, { candidates: newCandidates });
+      setShowCandidateForm(false);
+      setEditingCandidateId(null);
+      setCForm(emptyC);
+    } finally { setSaving(false); }
+  };
+
+  const deleteCandidate = async (cid: string) => {
+    if (!selected || !confirm('Delete this candidate?')) return;
+    const newCandidates = selected.candidates.filter((c: ILeftCandidate) => c._id !== cid);
+    await updateRegion(selected._id, { candidates: newCandidates });
+    flash('Candidate deleted');
+  };
+
+  const handleDeleteRegion = async (id: string) => {
+    if (!confirm('Delete this region and all its candidates?')) return;
+    await deleteRegion(id);
+    if (selectedId === id) setSelectedId(regions.find((r: ILeftElectionRegion) => r._id !== id)?._id ?? null);
+    flash('Region deleted');
+  };
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Left: Regions list */}
+      <div className="lg:col-span-1 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest mukta-bold flex items-center gap-2">
+            <Layers size={14} className="text-blue-400" /> Regions
+          </h2>
+          <button onClick={openAddRegion}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition mukta-bold">
+            <Plus size={12} /> Add
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          {regions.map((r: ILeftElectionRegion) => (
+            <div key={r._id}
+              onClick={() => setSelectedId(r._id)}
+              className={`p-3 rounded-xl border cursor-pointer transition group ${selectedId === r._id || (!selectedId && r._id === regions[0]?._id)
+                ? 'bg-blue-600/20 border-blue-500/50 ring-1 ring-blue-500/30'
+                : 'bg-white/[0.03] border-white/10 hover:bg-white/[0.06] hover:border-white/20'}`}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-bold text-white text-sm mukta-bold truncate">{r.nepaliName}</p>
+                  <p className="text-[11px] text-slate-400">{r.name}</p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <StatusBadge status={r.status} />
+                    <span className="text-[10px] text-blue-400 font-bold">{r.totalCountPercent}%</span>
+                    {r.isCurrentDisplay && (
+                      <span className="text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold mukta-bold">ON AIR</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition">
+                  <button onClick={e => { e.stopPropagation(); openEditRegion(r); }}
+                    className="p-1.5 bg-white/5 hover:bg-blue-600/40 rounded-lg text-slate-400 hover:text-white transition">
+                    <Pencil size={12} />
+                  </button>
+                  <button onClick={e => { e.stopPropagation(); handleDeleteRegion(r._id); }}
+                    className="p-1.5 bg-white/5 hover:bg-red-600/40 rounded-lg text-slate-400 hover:text-red-400 transition">
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {regions.length === 0 && (
+            <div className="text-center py-8 text-slate-500 text-sm mukta-semibold">
+              No regions yet. Add one →
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Right: Detail panel */}
+      <div className="lg:col-span-2 space-y-4">
+
+        {/* Flash message */}
+        {msg && (
+          <div className="px-4 py-2.5 bg-emerald-600/20 border border-emerald-500/40 rounded-xl text-emerald-400 text-sm font-bold mukta-bold flex items-center gap-2">
+            <CheckCircle2 size={14} /> {msg}
+          </div>
+        )}
+
+        {/* Region Edit Form */}
+        {showRegionForm && (
+          <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-white mukta-bold flex items-center gap-2">
+                <Monitor size={16} className="text-blue-400" />
+                {editingRegion ? 'Edit Region' : 'New Region'}
+              </h3>
+              <button onClick={() => setShowRegionForm(false)} className="text-slate-500 hover:text-white transition"><X size={16} /></button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">English Name</label>
+                <input value={rForm.name} onChange={e => setRForm(p => ({ ...p, name: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition" placeholder="Jhapa-5" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Nepali Name</label>
+                <input value={rForm.nepaliName} onChange={e => setRForm(p => ({ ...p, nepaliName: e.target.value }))}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition" placeholder="झापा-५" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Count / Status Text</label>
+                <input type="text" value={rForm.totalCountPercent}
+                  onChange={e => setRForm(p => ({ ...p, totalCountPercent: e.target.value as any }))}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition" placeholder="e.g. 45% or Counting" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Status</label>
+                <select value={rForm.status} onChange={e => setRForm(p => ({ ...p, status: e.target.value as any }))}
+                  className="w-full px-3 py-2 bg-[#0a1120] border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition">
+                  <option value="pending">Pending</option>
+                  <option value="active">Active</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+            </div>
+            {editingRegion && (
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="onair" checked={editingRegion.isCurrentDisplay}
+                  onChange={async e => {
+                    if (e.target.checked) { await setDisplayRegion(editingRegion._id); flash('Set as On-Air ✓'); }
+                  }}
+                  className="w-4 h-4 accent-blue-500" />
+                <label htmlFor="onair" className="text-sm text-slate-300 mukta-semibold cursor-pointer">Set as ON AIR (public display)</label>
+              </div>
+            )}
+            <div className="flex items-center gap-2 mt-2">
+              <input type="checkbox" id="showwidget" checked={rForm.showWidget}
+                onChange={async e => {
+                  const checked = e.target.checked;
+                  setRForm(p => ({ ...p, showWidget: checked }));
+                  if (editingRegion) {
+                    await updateRegion(editingRegion._id, { ...rForm, showWidget: checked });
+                    flash(`Widget ${checked ? 'shown' : 'hidden'} ✓`);
+                  }
+                }}
+                className="w-4 h-4 accent-blue-500" />
+              <label htmlFor="showwidget" className="text-sm text-slate-300 mukta-semibold cursor-pointer">Show Election Widget on UI</label>
+            </div>
+            <button onClick={saveRegion} disabled={saving}
+              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 mukta-bold">
+              <Save size={14} /> {saving ? 'Saving…' : 'Save Region'}
+            </button>
+          </div>
+        )}
+
+        {/* Candidates panel */}
+        {selected && (
+          <div className="bg-white/[0.04] border border-white/10 rounded-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-white mukta-bold flex items-center gap-2">
+                  <Users size={15} className="text-purple-400" />
+                  Candidates — {selected.nepaliName}
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">{selected.candidates.length} candidates</p>
+              </div>
+              <div className="flex gap-2">
+                {!selected.isCurrentDisplay && (
+                  <button onClick={() => setDisplayRegion(selected._id)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600/30 hover:bg-amber-600/50 text-amber-300 text-xs font-bold rounded-lg transition mukta-bold border border-amber-600/40">
+                    <Eye size={11} /> Set On-Air
+                  </button>
+                )}
+                <button onClick={openAddCandidate}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg transition mukta-bold">
+                  <Plus size={12} /> Add Candidate
+                </button>
+              </div>
+            </div>
+
+            {/* Candidate form */}
+            {showCandidateForm && (
+              <div className="m-4 bg-black/30 border border-white/10 rounded-xl p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-bold text-white mukta-bold">{editingCandidateId ? 'Edit Candidate' : 'New Candidate'}</h4>
+                  <button onClick={() => { setShowCandidateForm(false); setEditingCandidateId(null); }} className="text-slate-500 hover:text-white transition"><X size={14} /></button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2">
+                    <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Full Name (Nepali)</label>
+                    <input value={cForm.name} onChange={e => setCForm(p => ({ ...p, name: e.target.value }))}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition" placeholder="केपी शर्मा ओली" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Party</label>
+                    <input value={cForm.party} onChange={e => setCForm(p => ({ ...p, party: e.target.value }))}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition" placeholder="CPN-UML" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Party Flag Image</label>
+                    <ImageInput value={cForm.partySymbol} onChange={v => setCForm(p => ({ ...p, partySymbol: v }))} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Total Votes</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={toNepali(cForm.votes)}
+                      onChange={e => setCForm(p => ({ ...p, votes: parseNepaliInt(e.target.value) }))}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition mukta-bold"
+                      placeholder="०"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Vote Change</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={toNepali(cForm.changeVotes)}
+                      onChange={e => setCForm(p => ({ ...p, changeVotes: parseNepaliInt(e.target.value) }))}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition mukta-bold"
+                      placeholder="०"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Party Color</label>
+                    <div className="flex gap-2 items-center">
+                      <input type="color" value={cForm.color} onChange={e => setCForm(p => ({ ...p, color: e.target.value }))}
+                        className="w-10 h-9 rounded-lg border border-white/10 cursor-pointer bg-transparent" />
+                      <input value={cForm.color} onChange={e => setCForm(p => ({ ...p, color: e.target.value }))}
+                        className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition" />
+                    </div>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Photo</label>
+                    <ImageInput value={cForm.imageUrl} onChange={v => setCForm(p => ({ ...p, imageUrl: v }))} />
+                  </div>
+                </div>
+                <button onClick={saveCandidate} disabled={saving}
+                  className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 mukta-bold">
+                  <Save size={14} /> {saving ? 'Saving…' : 'Save Candidate'}
+                </button>
+              </div>
+            )}
+
+            {/* Candidates list */}
+            <div className="divide-y divide-white/5">
+              {selected.candidates.length === 0 && (
+                <div className="px-5 py-8 text-center text-slate-500 text-sm mukta-semibold">No candidates yet. Add one above.</div>
+              )}
+              {selected.candidates.map((c: ILeftCandidate) => (
+                <div key={c._id} className="px-5 py-3.5 flex items-center gap-4 hover:bg-white/[0.02] transition group">
+                  <div className="w-1 h-12 rounded-full flex-shrink-0" style={{ backgroundColor: c.color }} />
+                  {c.imageUrl ? (
+                    <img src={c.imageUrl} alt={c.name} className="w-10 h-10 rounded-full object-cover border border-white/10 flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-lg flex-shrink-0" style={{ background: c.color + '22' }}>
+                      {c.name.charAt(0)}
+                    </div>
+                  )}
+                  {c.partySymbol && (
+                    <img src={c.partySymbol} alt={c.party} className="w-6 h-6 rounded-full object-cover border border-white/10 sm:hidden md:block flex-shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-white text-sm mukta-bold truncate">{c.name}</p>
+                    <p className="text-[11px] text-slate-400">{c.party}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-black text-white text-base mukta-extrabold tabular-nums">{formatNepaliVotes(c.votes)}</p>
+                    <p className="text-[11px] text-emerald-400 font-bold">▲ {toNepali(c.changeVotes)}</p>
+                  </div>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
+                    <button onClick={() => openEditCandidate(c)}
+                      className="p-1.5 bg-white/5 hover:bg-blue-600/40 rounded-lg text-slate-400 hover:text-white transition">
+                      <Pencil size={12} />
+                    </button>
+                    <button onClick={() => deleteCandidate(c._id)}
+                      className="p-1.5 bg-white/5 hover:bg-red-600/40 rounded-lg text-slate-400 hover:text-red-400 transition">
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
 function WidgetTab() {
   const { regions, refreshRegions, createRegion, updateRegion, deleteRegion, setDisplayRegion } = useElection();
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -183,7 +562,8 @@ function WidgetTab() {
         );
         flash('Candidate updated ✓');
       } else {
-        newCandidates = [...selected.candidates, { ...cForm, _id: `tmp-${Date.now()}` }];
+        const tempId = [...Array(24)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+        newCandidates = [...selected.candidates, { ...cForm, _id: tempId }];
         flash('Candidate added ✓');
       }
       await updateRegion(selected._id, { candidates: newCandidates });
@@ -215,10 +595,10 @@ function WidgetTab() {
           <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest mukta-bold flex items-center gap-2">
             <Layers size={14} className="text-blue-400" /> Regions
           </h2>
-          {/* <button onClick={openAddRegion}
+          <button onClick={openAddRegion}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition mukta-bold">
             <Plus size={12} /> Add
-          </button> */}
+          </button>
         </div>
 
         <div className="space-y-2">
@@ -357,10 +737,10 @@ function WidgetTab() {
                     <Eye size={11} /> Set On-Air
                   </button>
                 )}
-                {/* <button onClick={openAddCandidate}
+                <button onClick={openAddCandidate}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg transition mukta-bold">
                   <Plus size={12} /> Add Candidate
-                </button> */}
+                </button>
               </div>
             </div>
 
@@ -1013,7 +1393,7 @@ export default function DashboardPage() {
   const { items: marqueeItems, refreshNews: refreshMarquee } = useNewsMarquee();
   const { connected, socketUnavailable } = useSocket();
   const isLive = connected || socketUnavailable;
-  const [tab, setTab] = useState<'widget' | 'ticker' | 'news' | 'marquee'>('widget');
+  const [tab, setTab] = useState<'widget' | 'leftwidget' | 'ticker' | 'news' | 'marquee'>('widget');
   const [reseeding, setReseeding] = useState(false);
 
   useEffect(() => {
@@ -1102,9 +1482,10 @@ export default function DashboardPage() {
       {/* Tab bar */}
       <div className="border-b border-white/10 bg-[#0a1120]/60 backdrop-blur sticky top-[57px] z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex gap-1 py-2">
+          <div className="flex gap-1 py-2 overflow-x-auto no-scrollbar">
             {([
-              { id: 'widget', label: 'Election Widget', icon: <Monitor size={14} />, color: 'blue' },
+              { id: 'widget', label: 'Right Election Widget', icon: <Monitor size={14} />, color: 'blue' },
+              { id: 'leftwidget', label: 'Left Election Widget', icon: <Monitor size={14} />, color: 'blue' },
               { id: 'ticker', label: 'Ticker Bar', icon: <Radio size={14} />, color: 'cyan' },
               { id: 'marquee', label: 'White Marquee', icon: <MessageSquare size={14} />, color: 'orange' },
               { id: 'news', label: 'Breaking News', icon: <MessageSquare size={14} />, color: 'red' },
@@ -1127,7 +1508,7 @@ export default function DashboardPage() {
 
       {/* Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {tab === 'widget' ? <WidgetTab /> : tab === 'ticker' ? <TickerTab /> : tab === 'marquee' ? <MarqueeTab /> : <NewsTab />}
+        {tab === 'widget' ? <WidgetTab /> : tab === 'leftwidget' ? <LeftWidgetTab /> : tab === 'ticker' ? <TickerTab /> : tab === 'marquee' ? <MarqueeTab /> : <NewsTab />}
       </main>
     </div>
   );

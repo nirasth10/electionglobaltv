@@ -27,10 +27,10 @@ const BreakingNews = () => {
     const marqueeDuration = Math.max(40, Math.round(totalChars * 0.15));
 
     return (
-        <div className="fixed bottom-0 left-0 w-full z-50 bg-white border-y-[2px] sm:border-y-[3px] border-[#131313] shadow-lg flex overflow-hidden h-9 sm:h-[48px] font-sans antialiased">
+        <div className="fixed bottom-0 left-0 w-full z-50 bg-white border-y-[2px] sm:border-y-[3px] border-[#131313] shadow-lg flex overflow-hidden font-sans antialiased" style={{ height: '70px' }}>
             {/* Logo Section */}
             <div className="bg-[#051A3B] flex items-center justify-center flex-shrink-0 z-20 relative h-full">
-                <img src="/logo.png" alt="Global TV" className="h-[90%] w-auto object-contain px-2 sm:px-3 bg-[#051A3B]" />
+                <img src="/logo.png" alt="Global TV" className="w-auto object-contain px-2 sm:px-3 bg-[#051A3B]" style={{ height: '43px' }} />
             </div>
 
             {/* Breaking News Label */}
@@ -40,7 +40,7 @@ const BreakingNews = () => {
             <div className="flex-1 flex items-center overflow-hidden relative bg-white border-l border-[#051A3B]/10">
                 <div className="whitespace-nowrap flex absolute animate-marquee h-full items-center" style={{ animationDuration: `${marqueeDuration}s` }}>
                     {activeItems.map((item, index) => (
-                        <span key={`${item._id}-${index}`} className="flex items-center text-[#051A3B] text-[16px] sm:text-[23px] font-extrabold mukta-bold leading-none translate-y-[2px]">
+                        <span key={`${item._id}-${index}`} className="flex items-center text-[#051A3B] font-extrabold mukta-bold leading-none translate-y-[2px]" style={{ fontSize: '30px' }}>
                             {index > 0 && (
                                 <span className="inline-block w-12 sm:w-24"></span>
                             )}
@@ -52,7 +52,7 @@ const BreakingNews = () => {
 
             {/* Time Section */}
             <div className="relative z-20 flex-shrink-0 flex items-center h-full drop-shadow-[-2px_0px_3px_rgba(0,0,0,0.3)]">
-                <div className="time-container bg-gradient-to-b from-[#ffffff] via-[#f1f3f5] to-[#d1d5db] h-full flex items-center pr-3 sm:pr-5 text-[#051A3B] font-extrabold text-[15px] sm:text-[21px] tracking-wide overflow-hidden">
+                <div className="time-container bg-gradient-to-b from-[#ffffff] via-[#f1f3f5] to-[#d1d5db] h-full flex items-center pr-3 sm:pr-5 text-[#051A3B] font-extrabold tracking-wide overflow-hidden" style={{ fontSize: '30px' }}>
                     <span className="relative z-10 pl-6 sm:pl-8 lg:pl-10 translate-y-[1px]">{currentTime}</span>
                     {/* Glossy overlay */}
                     <div className="absolute top-0 left-0 w-full h-[45%] bg-gradient-to-b from-white/80 to-transparent pointer-events-none z-0"></div>

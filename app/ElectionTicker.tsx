@@ -13,8 +13,8 @@ const ElectionTicker = () => {
   const hasNews = newsItems.length > 0;
 
   return (
-    <div className="fixed bottom-9 sm:bottom-12 left-0 w-full z-40 font-sans antialiased mukta-regular transition-all duration-500">
-      <div className="h-[80px] sm:h-[96px] bg-[#0a1120]/95 backdrop-blur-xl border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] flex overflow-hidden">
+    <div className="fixed left-0 w-full z-40 font-sans antialiased mukta-regular transition-all duration-500" style={{ bottom: '70px' }}>
+      <div className="bg-[#0a1120]/95 backdrop-blur-xl border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] flex overflow-hidden" style={{ height: '96px' }}>
 
         {/* Branding */}
         <div className="bg-gradient-to-r from-blue-700 to-blue-900 px-3 sm:px-6 flex flex-col justify-center items-center min-w-[110px] sm:min-w-[170px] border-r border-white/10 shadow-xl flex-shrink-0">
@@ -40,7 +40,7 @@ const ElectionTicker = () => {
             activeItems.map((item) => (
               <div
                 key={item._id}
-                className="flex items-center min-w-[190px] sm:min-w-[230px] h-14 sm:h-16 bg-white/[0.03] border border-white/5 rounded-xl px-3 sm:px-4 hover:bg-white/[0.07] transition-all group gap-2 sm:gap-3 flex-shrink-0"
+                className="flex items-center min-w-[280px] bg-white/[0.03] border border-white/5 rounded-xl px-4 hover:bg-white/[0.07] transition-all group gap-3 flex-shrink-0" style={{ height: '80px' }}
               >
                 {/* 
                 <div
@@ -52,21 +52,19 @@ const ElectionTicker = () => {
                   <img
                     src={item.imageUrl}
                     alt={item.party}
-                    className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-white/20 object-cover flex-shrink-0"
+                    className="w-10 h-10 rounded-full border border-white/20 object-cover flex-shrink-0"
                   />
                 )}
-                <div className="flex-1 min-w-0">
-                  {/* <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase mukta-semibold">{item.label} {item.region}</p> */}
-                  <h3 className="text-sm sm:text-base font-black text-white mukta-extrabold leading-none group-hover:text-blue-300 transition-colors" style={{ fontSize: '30px' }}>
+                <div className="flex-1 min-w-0 flex flex-col justify-center mt-1">
+                  <h3 className="font-black text-white mukta-extrabold leading-none group-hover:text-blue-300 transition-colors" style={{ fontSize: '30px' }}>
                     {item.party}
                   </h3>
-                  <span className="text-[9px] sm:text-[10px] font-bold text-emerald-400 mukta-bold">▲ {item.changeVotes}</span>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <div className="text-base sm:text-lg font-black text-white tabular-nums tracking-tighter mukta-extrabold leading-none">
-                    {formatNepaliVotes(item.votes)}
+                  <div className="flex items-center gap-1.5 font-bold mukta-bold mt-2" style={{ fontSize: '20px' }}>
+                    <span className="text-slate-400">अग्रता</span>
+                    <span className="text-emerald-400">▲ {item.changeVotes}</span>
+                    <span className="text-slate-600 mx-1">|</span>
+                    <span className="text-white tabular-nums tracking-tighter">{formatNepaliVotes(item.votes)}</span>
                   </div>
-                  <p className="text-[12px] sm:text-[11px] text-slate-500 font-bold uppercase mukta-bold">अग्रता</p>
                 </div>
               </div>
             ))

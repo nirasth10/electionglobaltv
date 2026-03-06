@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Mukta } from "next/font/google";
 import { AuthProvider } from "@/app/context/AuthContext";
 import { SocketProvider } from "@/app/context/SocketContext";
 import { ElectionProvider } from "@/app/context/ElectionContext";
+import { LeftElectionProvider } from "@/app/context/LeftElectionContext";
 import { TickerProvider } from "@/app/context/TickerContext";
 import { NewsProvider } from "@/app/context/NewsContext";
 import { NewsMarqueeProvider } from "@/app/context/NewsMarqueeContext";
@@ -38,13 +39,15 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <AuthProvider>
           <SocketProvider>
             <ElectionProvider>
-              <TickerProvider>
-                <NewsProvider>
-                  <NewsMarqueeProvider>
-                    {children}
-                  </NewsMarqueeProvider>
-                </NewsProvider>
-              </TickerProvider>
+              <LeftElectionProvider>
+                <TickerProvider>
+                  <NewsProvider>
+                    <NewsMarqueeProvider>
+                      {children}
+                    </NewsMarqueeProvider>
+                  </NewsProvider>
+                </TickerProvider>
+              </LeftElectionProvider>
             </ElectionProvider>
           </SocketProvider>
         </AuthProvider>
