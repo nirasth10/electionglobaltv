@@ -40,7 +40,7 @@ const BreakingNews = () => {
             <div className="flex-1 flex items-center overflow-hidden relative bg-white border-l border-[#051A3B]/10">
                 <div className="whitespace-nowrap flex absolute animate-marquee h-full items-center" style={{ animationDuration: `${marqueeDuration}s` }}>
                     {activeItems.map((item, index) => (
-                        <span key={`${item._id}-${index}`} className="flex items-center text-[#051A3B] font-extrabold mukta-bold leading-none translate-y-[2px]" style={{ fontSize: '30px' }}>
+                        <span key={`${item._id}-${index}`} className="flex items-center text-[#051A3B] font-extrabold mukta-bold leading-none translate-y-[2px]" style={{ fontSize: '40px' }}>
                             {index > 0 && (
                                 <span className="inline-block w-12 sm:w-24"></span>
                             )}
