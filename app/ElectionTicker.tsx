@@ -66,7 +66,7 @@ const ElectionTicker = () => {
                   <div className="text-base sm:text-lg font-black text-white tabular-nums tracking-tighter mukta-extrabold leading-none">
                     {formatNepaliVotes(item.votes)}
                   </div>
-                  <p className="text-[8px] sm:text-[9px] text-slate-500 font-bold uppercase mukta-bold">Votes</p>
+                  <p className="text-[12px] sm:text-[11px] text-slate-500 font-bold uppercase mukta-bold">अग्रता</p>
                 </div>
               </div>
             ))
