@@ -14,7 +14,7 @@ const ElectionTicker = () => {
 
   return (
     <div className="fixed left-0 w-full z-40 font-sans antialiased mukta-regular transition-all duration-500" style={{ bottom: '70px' }}>
-      <div className="bg-[#0a1120]/95 backdrop-blur-xl border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] flex overflow-hidden" style={{ height: '96px' }}>
+      <div className="bg-[#063522] border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] flex overflow-hidden" style={{ height: '96px' }}>
 
         {/* Branding */}
         <div className="bg-gradient-to-r from-blue-700 to-blue-900 px-3 sm:px-6 flex flex-col justify-center items-center min-w-[110px] sm:min-w-[170px] border-r border-white/10 shadow-xl flex-shrink-0">

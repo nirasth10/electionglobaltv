@@ -13,7 +13,7 @@ export default function ElectionWidget() {
 
     return (
         <div className="fixed top-4 z-50 font-sans antialiased mukta-regular" style={{ right: '20px' }}>
-            <div className="w-[calc(100vw-2rem)] sm:w-[360px] max-h-[calc(100vh-130px)] bg-[#0a1120]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden" style={{ marginTop: '160px' }}>
+            <div className="w-[calc(100vw-2rem)] sm:w-[360px] max-h-[calc(100vh-130px)] bg-[#063522] border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden" style={{ marginTop: '160px' }}>
                 {/* Header */}
                 <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-white/5 bg-gradient-to-r from-white/[0.03] to-transparent">
                     <div className="flex justify-between items-center gap-2">
@@ -55,7 +55,7 @@ export default function ElectionWidget() {
                                 )}
                                 {/* Party Flag Badge */}
                                 <div
-                                    className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-[#0a1120] flex items-center justify-center overflow-hidden"
+                                    className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-[#063522] flex items-center justify-center overflow-hidden"
                                     style={{ backgroundColor: candidate.color }}
                                 >
                                     {candidate.partySymbol && candidate.partySymbol.startsWith('http') && (
@@ -82,16 +82,7 @@ export default function ElectionWidget() {
                     ))}
                 </div>
 
-                {/* Footer */}
-                <div className="px-4 sm:px-6 py-3 bg-black/40 border-t border-white/5 flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                        <span className="flex h-2.5 w-2.5 relative flex-shrink-0">
-                            {/* <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span> */}
-                            {/* <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span> */}
-                        </span>
-                        {/* <span className="text-[10px] sm:text-[11px] font-bold text-slate-200 uppercase tracking-widest mukta-bold">Live Updates</span> */}
-                    </div>
-                </div>
+
             </div>
         </div>
     );
