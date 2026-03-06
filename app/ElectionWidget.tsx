@@ -12,7 +12,7 @@ export default function ElectionWidget() {
 
     return (
         <div className="fixed top-4 right-4 sm:top-8 sm:right-16 md:right-24 xl:right-[8vw] z-50 font-sans antialiased mukta-regular">
-            <div className="w-[calc(100vw-2rem)] sm:w-[320px] max-h-[calc(100vh-130px)] bg-[#0a1120]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden">
+            <div className="w-[calc(100vw-2rem)] sm:w-[320px] max-h-[calc(100vh-130px)] bg-[#0a1120]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden" style={{ marginTop: '150px' }}>
                 {/* Header */}
                 <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-white/5 bg-gradient-to-r from-white/[0.03] to-transparent">
                     <div className="flex justify-between items-center gap-2">
