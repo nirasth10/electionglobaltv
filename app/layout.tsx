@@ -5,6 +5,7 @@ import { SocketProvider } from "@/app/context/SocketContext";
 import { ElectionProvider } from "@/app/context/ElectionContext";
 import { TickerProvider } from "@/app/context/TickerContext";
 import { NewsProvider } from "@/app/context/NewsContext";
+import { NewsMarqueeProvider } from "@/app/context/NewsMarqueeContext";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -39,7 +40,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <ElectionProvider>
               <TickerProvider>
                 <NewsProvider>
-                  {children}
+                  <NewsMarqueeProvider>
+                    {children}
+                  </NewsMarqueeProvider>
                 </NewsProvider>
               </TickerProvider>
             </ElectionProvider>

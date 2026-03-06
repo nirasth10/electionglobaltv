@@ -4,6 +4,7 @@ import { useElection } from '@/app/context/ElectionContext';
 import { useSocket } from '@/app/context/SocketContext';
 import ElectionTicker from './ElectionTicker';
 import BreakingNews from './BreakingNews';
+import NewsMarquee from './NewsMarquee';
 import ElectionWidget from './ElectionWidget';
 import Link from 'next/link';
 import { Wifi, WifiOff } from 'lucide-react';
@@ -40,6 +41,7 @@ export default function ElectionDisplayPage() {
 
   return (
     <div className="min-h-screen w-full pb-24 bg-transparent text-white">
+      <NewsMarquee />
       <ElectionTicker />
       <BreakingNews />
 

@@ -6,6 +6,7 @@ import { useAuth } from '@/app/context/AuthContext';
 import { useElection, IElectionRegion, ICandidate } from '@/app/context/ElectionContext';
 import { useTicker, ITickerItem } from '@/app/context/TickerContext';
 import { useNews, INewsItem } from '@/app/context/NewsContext';
+import { useNewsMarquee, INewsMarqueeItem } from '@/app/context/NewsMarqueeContext';
 import { useSocket } from '@/app/context/SocketContext';
 import Link from 'next/link';
 import {
@@ -838,6 +839,170 @@ function NewsTab() {
   );
 }
 
+// ─── Marquee Tab ────────────────────────────────────────────────────────────
+function MarqueeTab() {
+  const { heading, items, createItem, updateItem, deleteItem, updateHeading } = useNewsMarquee();
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const [tempHeading, setTempHeading] = useState(heading);
+  const [savingHeading, setSavingHeading] = useState(false);
+
+  const [msg, setMsg] = useState('');
+  const flash = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 2500); };
+
+  const [text, setText] = useState('');
+  const [isActive, setIsActive] = useState(true);
+
+  useEffect(() => {
+    setTempHeading(heading);
+  }, [heading]);
+
+  const saveHeading = async () => {
+    if (!tempHeading.trim()) return;
+    try {
+      setSavingHeading(true);
+      await updateHeading(tempHeading);
+      flash('Heading Updated ✓');
+    } finally {
+      setSavingHeading(false);
+    }
+  };
+
+  const openEdit = (item: INewsMarqueeItem) => {
+    setEditingId(item._id);
+    setText(item.text);
+    setIsActive(item.isActive);
+    setShowForm(true);
+  };
+
+  const openAdd = () => { setEditingId(null); setText(''); setIsActive(true); setShowForm(true); };
+
+  const save = async () => {
+    if (!text.trim()) return;
+    try {
+      setSaving(true);
+      if (editingId) { await updateItem(editingId, { text, isActive }); flash('Updated ✓'); }
+      else { await createItem({ text, isActive }); flash('Added ✓'); }
+      setShowForm(false);
+      setEditingId(null);
+    } finally { setSaving(false); }
+  };
+
+  const moveOrder = async (item: INewsMarqueeItem, dir: -1 | 1) => {
+    const newOrder = item.order + dir;
+    const swap = items.find(i => i.order === newOrder);
+    if (swap) await updateItem(swap._id, { order: item.order });
+    await updateItem(item._id, { order: newOrder });
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest mukta-bold flex items-center gap-2">
+          <MessageSquare size={14} className="text-orange-400" />
+          General Marquee (White Bar)
+          <span className="ml-1 text-[11px] bg-white/10 text-slate-400 px-2 py-0.5 rounded-full">{items.length} total · {items.filter(i => i.isActive).length} active</span>
+        </h2>
+
+        <div className="flex gap-2 w-full sm:w-auto">
+          <input
+            type="text"
+            value={tempHeading}
+            onChange={e => setTempHeading(e.target.value)}
+            placeholder="Marquee Heading"
+            className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-orange-500 transition max-w-[150px]"
+          />
+          <button onClick={saveHeading} disabled={savingHeading || tempHeading === heading}
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition mukta-bold shrink-0">
+            <Save size={12} /> Save Heading
+          </button>
+          <button onClick={openAdd}
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-bold rounded-lg transition mukta-bold shrink-0">
+            <Plus size={12} /> Add News
+          </button>
+        </div>
+      </div>
+
+      {msg && (
+        <div className="px-4 py-2.5 bg-emerald-600/20 border border-emerald-500/40 rounded-xl text-emerald-400 text-sm font-bold mukta-bold flex items-center gap-2">
+          <CheckCircle2 size={14} /> {msg}
+        </div>
+      )}
+
+      {showForm && (
+        <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-white mukta-bold flex items-center gap-2">
+              <MessageSquare size={15} className="text-orange-400" />
+              {editingId ? 'Edit Marquee News' : 'New Marquee News'}
+            </h3>
+            <button onClick={() => { setShowForm(false); setEditingId(null); }} className="text-slate-500 hover:text-white transition"><X size={16} /></button>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Text</label>
+              <textarea value={text} onChange={e => setText(e.target.value)} rows={3}
+                placeholder="Type marquee news here..."
+                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-orange-500 transition resize-none" />
+            </div>
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="mactive" checked={isActive} onChange={e => setIsActive(e.target.checked)}
+                className="w-4 h-4 accent-orange-500 rounded" />
+              <label htmlFor="mactive" className="text-sm text-slate-300 mukta-semibold cursor-pointer">Show in ticker</label>
+            </div>
+          </div>
+          <button onClick={save} disabled={saving}
+            className="w-full py-2.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 mukta-bold">
+            <Save size={14} /> {saving ? 'Saving…' : 'Save News'}
+          </button>
+        </div>
+      )}
+
+      <div className="bg-white/[0.04] border border-white/10 rounded-2xl overflow-hidden">
+        {items.length === 0 ? (
+          <div className="py-12 text-center text-slate-500 text-sm mukta-semibold">No marquee items yet.</div>
+        ) : (
+          <div className="divide-y divide-white/5">
+            {[...items].sort((a, b) => a.order - b.order).map((item, idx) => (
+              <div key={item._id} className={`px-5 py-3.5 flex items-center gap-3 transition group ${item.isActive ? 'hover:bg-white/[0.02]' : 'opacity-50 hover:opacity-75'}`}>
+                <div className="flex flex-col gap-0.5 flex-shrink-0">
+                  <button onClick={() => moveOrder(item, -1)} disabled={idx === 0}
+                    className="p-0.5 text-slate-600 hover:text-white disabled:opacity-20 transition"><ChevronUp size={12} /></button>
+                  <button onClick={() => moveOrder(item, 1)} disabled={idx === items.length - 1}
+                    className="p-0.5 text-slate-600 hover:text-white disabled:opacity-20 transition"><ChevronDown size={12} /></button>
+                </div>
+
+                <div className="w-1.5 h-10 rounded-full flex-shrink-0 bg-orange-500" />
+
+                <div className="flex-1 min-w-0 pr-4">
+                  <p className="text-white text-sm mukta-semibold leading-snug">{item.text}</p>
+                </div>
+
+                <div className="flex gap-1 flex-shrink-0">
+                  <button onClick={() => updateItem(item._id, { isActive: !item.isActive })}
+                    className={`p-1.5 rounded-lg transition ${item.isActive ? 'bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/40' : 'bg-white/5 text-slate-500 hover:text-white'}`}>
+                    {item.isActive ? <Eye size={12} /> : <EyeOff size={12} />}
+                  </button>
+                  <button onClick={() => openEdit(item)}
+                    className="p-1.5 bg-white/5 hover:bg-orange-600/40 rounded-lg text-slate-400 hover:text-white transition opacity-0 group-hover:opacity-100">
+                    <Pencil size={12} />
+                  </button>
+                  <button onClick={async () => { if (confirm('Delete this news?')) { await deleteItem(item._id); flash('Deleted'); } }}
+                    className="p-1.5 bg-white/5 hover:bg-red-600/40 rounded-lg text-slate-400 hover:text-red-400 transition opacity-0 group-hover:opacity-100">
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Dashboard ────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const router = useRouter();
@@ -845,9 +1010,10 @@ export default function DashboardPage() {
   const { regions, refreshRegions } = useElection();
   const { items: tickerItems, refreshTicker } = useTicker();
   const { items: newsItems, refreshNews } = useNews();
+  const { items: marqueeItems, refreshNews: refreshMarquee } = useNewsMarquee();
   const { connected, socketUnavailable } = useSocket();
   const isLive = connected || socketUnavailable;
-  const [tab, setTab] = useState<'widget' | 'ticker' | 'news'>('widget');
+  const [tab, setTab] = useState<'widget' | 'ticker' | 'news' | 'marquee'>('widget');
   const [reseeding, setReseeding] = useState(false);
 
   useEffect(() => {
@@ -874,6 +1040,7 @@ export default function DashboardPage() {
     await refreshRegions();
     await refreshTicker();
     await refreshNews();
+    await refreshMarquee();
     setReseeding(false);
   };
 
@@ -922,6 +1089,7 @@ export default function DashboardPage() {
             { label: 'Total Candidates', value: regions.reduce((s, r) => s + r.candidates.length, 0), color: 'text-purple-400' },
             { label: 'Ticker Items', value: tickerItems.length, color: 'text-cyan-400' },
             { label: 'Breaking News', value: newsItems.length, color: 'text-red-400' },
+            { label: 'Marquee News', value: marqueeItems.length, color: 'text-orange-400' },
           ].map(s => (
             <div key={s.label} className="flex items-center gap-2 flex-shrink-0">
               <span className={`text-xl font-black mukta-extrabold tabular-nums ${s.color}`}>{s.value}</span>
@@ -938,13 +1106,15 @@ export default function DashboardPage() {
             {([
               { id: 'widget', label: 'Election Widget', icon: <Monitor size={14} />, color: 'blue' },
               { id: 'ticker', label: 'Ticker Bar', icon: <Radio size={14} />, color: 'cyan' },
+              { id: 'marquee', label: 'White Marquee', icon: <MessageSquare size={14} />, color: 'orange' },
               { id: 'news', label: 'Breaking News', icon: <MessageSquare size={14} />, color: 'red' },
             ] as const).map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition mukta-bold ${tab === t.id
                   ? t.color === 'blue' ? 'bg-blue-600/30 text-blue-300 border border-blue-500/40'
                     : t.color === 'cyan' ? 'bg-cyan-600/30 text-cyan-300 border border-cyan-500/40'
-                      : 'bg-red-600/30 text-red-300 border border-red-500/40'
+                      : t.color === 'orange' ? 'bg-orange-600/30 text-orange-300 border border-orange-500/40'
+                        : 'bg-red-600/30 text-red-300 border border-red-500/40'
                   : 'text-slate-400 hover:text-white hover:bg-white/5'
                   }`}>
                 {t.icon}
@@ -957,7 +1127,7 @@ export default function DashboardPage() {
 
       {/* Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {tab === 'widget' ? <WidgetTab /> : tab === 'ticker' ? <TickerTab /> : <NewsTab />}
+        {tab === 'widget' ? <WidgetTab /> : tab === 'ticker' ? <TickerTab /> : tab === 'marquee' ? <MarqueeTab /> : <NewsTab />}
       </main>
     </div>
   );
