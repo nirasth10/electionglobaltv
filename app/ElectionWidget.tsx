@@ -23,8 +23,8 @@ export default function ElectionWidget() {
                             <p className="text-[10px] text-slate-500 mukta-semibold mt-0.5">{currentRegion.name}</p>
                         </div>
                         <div className="text-right flex-shrink-0">
-                            <div className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1 mukta-semibold">कुल गणना</div>
-                            <div className="text-xl sm:text-2xl font-black text-white mukta-extrabold">{currentRegion.totalCountPercent}</div>
+                            {/* <div className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1 mukta-semibold">कुल गणना</div> */}
+                            {/* <div className="text-xl sm:text-2xl font-black text-white mukta-extrabold">{currentRegion.totalCountPercent}</div> */}
                             <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full mukta-bold ${currentRegion.status === 'active' ? 'bg-emerald-500/20 text-emerald-400' :
                                 currentRegion.status === 'completed' ? 'bg-blue-500/20 text-blue-400' :
                                     'bg-orange-500/20 text-orange-400'
@@ -98,10 +98,10 @@ export default function ElectionWidget() {
                 <div className="px-4 sm:px-6 py-3 bg-black/40 border-t border-white/5 flex justify-between items-center">
                     <div className="flex items-center gap-2">
                         <span className="flex h-2.5 w-2.5 relative flex-shrink-0">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                            {/* <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span> */}
+                            {/* <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span> */}
                         </span>
-                        <span className="text-[10px] sm:text-[11px] font-bold text-slate-200 uppercase tracking-widest mukta-bold">Live Updates</span>
+                        {/* <span className="text-[10px] sm:text-[11px] font-bold text-slate-200 uppercase tracking-widest mukta-bold">Live Updates</span> */}
                     </div>
                 </div>
             </div>
