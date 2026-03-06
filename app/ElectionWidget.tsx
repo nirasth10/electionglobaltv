@@ -59,7 +59,7 @@ export default function ElectionWidget() {
                                 ) : (
                                     <div
                                         className="w-11 h-11 sm:w-13 sm:h-13 rounded-full border-2 border-white/10 flex items-center justify-center text-lg font-bold"
-                                        style={{ backgroundColor: candidate.color + '33', color: candidate.color }}
+                                    // style={{ backgroundColor: candidate.color + '33', color: candidate.color }}
                                     >
                                         {candidate.name.charAt(0)}
                                     </div>
