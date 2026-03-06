@@ -21,6 +21,7 @@ export interface IElectionRegion {
   totalCountPercent: number;
   status: 'active' | 'completed' | 'pending';
   isCurrentDisplay: boolean;
+  showWidget?: boolean;
   candidates: ICandidate[];
   lastUpdated: string;
 }

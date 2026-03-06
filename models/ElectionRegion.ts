@@ -17,6 +17,7 @@ export interface IElectionRegion extends Document {
     totalCountPercent: number;
     status: 'active' | 'completed' | 'pending';
     isCurrentDisplay: boolean;
+    showWidget?: boolean;
     candidates: ICandidate[];
     lastUpdated: Date;
 }
@@ -42,14 +43,17 @@ const ElectionRegionSchema = new Schema<IElectionRegion>(
             default: 'active',
         },
         isCurrentDisplay: { type: Boolean, default: false },
+        showWidget: { type: Boolean, default: true },
         candidates: [CandidateSchema],
         lastUpdated: { type: Date, default: Date.now },
     },
     { timestamps: true }
 );
 
-const ElectionRegion: Model<IElectionRegion> =
-    mongoose.models.ElectionRegion ||
-    mongoose.model<IElectionRegion>('ElectionRegion', ElectionRegionSchema);
+if (mongoose.models.ElectionRegion) {
+    delete mongoose.models.ElectionRegion;
+}
+
+const ElectionRegion: Model<IElectionRegion> = mongoose.model<IElectionRegion>('ElectionRegion', ElectionRegionSchema);
 
 export default ElectionRegion;

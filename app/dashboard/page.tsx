@@ -114,7 +114,7 @@ function WidgetTab() {
   }, [regions, selectedId]);
 
   // Region form state
-  const [rForm, setRForm] = useState({ name: '', nepaliName: '', totalCountPercent: 0, status: 'active' as 'active' | 'completed' | 'pending' });
+  const [rForm, setRForm] = useState({ name: '', nepaliName: '', totalCountPercent: 0, showWidget: true, status: 'active' as 'active' | 'completed' | 'pending' });
   const [editingRegion, setEditingRegion] = useState<IElectionRegion | null>(null);
 
   // Candidate form state
@@ -123,14 +123,20 @@ function WidgetTab() {
 
   const openEditRegion = (r: IElectionRegion) => {
     setEditingRegion(r);
-    setRForm({ name: r.name, nepaliName: r.nepaliName, totalCountPercent: r.totalCountPercent, status: r.status });
+    setRForm({
+      name: r.name,
+      nepaliName: r.nepaliName,
+      totalCountPercent: r.totalCountPercent ?? 0,
+      showWidget: r.showWidget === undefined ? true : Boolean(r.showWidget),
+      status: r.status
+    });
     setShowRegionForm(true);
     setShowCandidateForm(false);
   };
 
   const openAddRegion = () => {
     setEditingRegion(null);
-    setRForm({ name: '', nepaliName: '', totalCountPercent: 0, status: 'active' });
+    setRForm({ name: '', nepaliName: '', totalCountPercent: 0, showWidget: true, status: 'active' });
     setShowRegionForm(true);
     setShowCandidateForm(false);
   };
@@ -287,8 +293,8 @@ function WidgetTab() {
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Count % (0–100)</label>
-                <input type="number" min="0" max="100" step="0.1" value={rForm.totalCountPercent}
-                  onChange={e => setRForm(p => ({ ...p, totalCountPercent: parseFloat(e.target.value) }))}
+                <input type="number" min="0" max="100" step="0.1" value={rForm.totalCountPercent === 0 ? 0 : rForm.totalCountPercent || ''}
+                  onChange={e => setRForm(p => ({ ...p, totalCountPercent: e.target.value === '' ? 0 : parseFloat(e.target.value) }))}
                   className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 transition" />
               </div>
               <div>
@@ -311,6 +317,19 @@ function WidgetTab() {
                 <label htmlFor="onair" className="text-sm text-slate-300 mukta-semibold cursor-pointer">Set as ON AIR (public display)</label>
               </div>
             )}
+            <div className="flex items-center gap-2 mt-2">
+              <input type="checkbox" id="showwidget" checked={rForm.showWidget}
+                onChange={async e => {
+                  const checked = e.target.checked;
+                  setRForm(p => ({ ...p, showWidget: checked }));
+                  if (editingRegion) {
+                    await updateRegion(editingRegion._id, { ...rForm, showWidget: checked });
+                    flash(`Widget ${checked ? 'shown' : 'hidden'} ✓`);
+                  }
+                }}
+                className="w-4 h-4 accent-blue-500" />
+              <label htmlFor="showwidget" className="text-sm text-slate-300 mukta-semibold cursor-pointer">Show Election Widget on UI</label>
+            </div>
             <button onClick={saveRegion} disabled={saving}
               className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 mukta-bold">
               <Save size={14} /> {saving ? 'Saving…' : 'Save Region'}
