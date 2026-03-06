@@ -22,6 +22,10 @@ const BreakingNews = () => {
 
     if (activeItems.length === 0) return null;
 
+    // ~0.15s per character gives a slow, readable TV-news pace. Min 40s so even short content isn't rushed.
+    const totalChars = activeItems.reduce((sum, item) => sum + item.text.length, 0);
+    const marqueeDuration = Math.max(40, Math.round(totalChars * 0.15));
+
     return (
         <div className="fixed bottom-0 left-0 w-full z-50 bg-white border-y-[2px] sm:border-y-[3px] border-[#131313] shadow-lg flex overflow-hidden h-9 sm:h-[48px] font-sans antialiased">
             {/* Logo Section */}
@@ -34,7 +38,7 @@ const BreakingNews = () => {
 
             {/* Ticker Section */}
             <div className="flex-1 flex items-center overflow-hidden relative bg-white border-l border-[#051A3B]/10">
-                <div className="whitespace-nowrap flex absolute animate-marquee h-full items-center">
+                <div className="whitespace-nowrap flex absolute animate-marquee h-full items-center" style={{ animationDuration: `${marqueeDuration}s` }}>
                     {activeItems.map((item, index) => (
                         <span key={`${item._id}-${index}`} className="flex items-center text-[#051A3B] text-[16px] sm:text-[23px] font-extrabold mukta-bold leading-none translate-y-[2px]">
                             {index > 0 && (
@@ -62,7 +66,7 @@ const BreakingNews = () => {
                 }
                 .animate-marquee {
                     left: 0;
-                    animation: marquee 30s linear infinite;
+                    animation: marquee 60s linear infinite;
                     width: max-content;
                 }
                 .animate-marquee:hover {
