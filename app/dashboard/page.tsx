@@ -112,7 +112,7 @@ function LeftWidgetTab() {
   useEffect(() => { if (!selectedId && editableRegions.length > 0) setSelectedId(editableRegions[0]._id); }, [editableRegions, selectedId]);
   const [newRegionForm, setNewRegionForm] = useState({ name: '', nepaliName: '', totalCountPercent: '' as any, showWidget: true, status: 'active' as 'active' | 'completed' | 'pending' });
   const [showNewRegionForm, setShowNewRegionForm] = useState(false);
-  const emptyC = { name: '', party: '', votes: 0, changeVotes: 0, color: '#3b82f6', imageUrl: '', partySymbol: '' };
+  const emptyC = { name: '', party: '', votes: 0, changeVotes: 0, color: '#3b82f6', imageUrl: '', partySymbol: '', isElected: false };
   const [newCandidateForm, setNewCandidateForm] = useState(emptyC);
   const [showNewCandidateForm, setShowNewCandidateForm] = useState(false);
   const handleRegionChange = (id: string, field: keyof ILeftElectionRegion, value: any) => {
@@ -274,6 +274,7 @@ function LeftWidgetTab() {
                     <div><label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Vote Change</label><input type="text" inputMode="numeric" value={toNepali(newCandidateForm.changeVotes)} onChange={e => setNewCandidateForm(p => ({ ...p, changeVotes: parseNepaliInt(e.target.value) }))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition mukta-bold" placeholder="०" /></div>
                     <div className="col-span-2"><label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Party Flag Image</label><ImageInput value={newCandidateForm.partySymbol} onChange={v => setNewCandidateForm(p => ({ ...p, partySymbol: v }))} /></div>
                     <div className="col-span-2"><label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Photo</label><ImageInput value={newCandidateForm.imageUrl} onChange={v => setNewCandidateForm(p => ({ ...p, imageUrl: v }))} /></div>
+                    <div className="col-span-2 flex items-center gap-2"><input type="checkbox" checked={newCandidateForm.isElected || false} onChange={e => setNewCandidateForm(p => ({ ...p, isElected: e.target.checked }))} className="w-4 h-4 accent-purple-500" /><label className="text-sm font-bold text-slate-300 mukta-bold cursor-pointer">Mark as Elected (Winner)</label></div>
                   </div>
                   <button onClick={() => addCandidateToRegion(selected._id)} className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 mukta-bold"><Plus size={14} />Add Candidate</button>
                 </div>
@@ -298,6 +299,7 @@ function LeftWidgetTab() {
                       <div><label className="text-[10px] font-bold text-slate-500 block mb-1 mukta-bold uppercase">Vote Change</label><input type="text" inputMode="numeric" value={toNepali(c.changeVotes)} onChange={e => handleCandidateChange(selected._id, c._id, 'changeVotes', parseNepaliInt(e.target.value))} className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500 transition mukta-bold" /></div>
                       <div><label className="text-[10px] font-bold text-slate-500 block mb-1 mukta-bold uppercase">Photo URL</label><input value={c.imageUrl || ''} onChange={e => handleCandidateChange(selected._id, c._id, 'imageUrl', e.target.value)} className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-xs focus:outline-none focus:border-purple-500 transition" placeholder="https://..." /></div>
                       <div><label className="text-[10px] font-bold text-slate-500 block mb-1 mukta-bold uppercase">Party Flag URL</label><input value={c.partySymbol || ''} onChange={e => handleCandidateChange(selected._id, c._id, 'partySymbol', e.target.value)} className="w-full px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-white text-xs focus:outline-none focus:border-purple-500 transition" placeholder="https://..." /></div>
+                      <div className="col-span-2 flex items-center gap-2 mt-2"><input type="checkbox" id={`elected-${c._id}`} checked={c.isElected || false} onChange={e => handleCandidateChange(selected._id, c._id, 'isElected', e.target.checked)} className="w-4 h-4 accent-purple-500" /><label htmlFor={`elected-${c._id}`} className="text-xs font-bold text-amber-400 mukta-bold cursor-pointer">🏆 Mark as Elected (Winner)</label></div>
                     </div>
                   </div>
                 ))}
@@ -344,7 +346,7 @@ function WidgetTab() {
   const [showNewRegionForm, setShowNewRegionForm] = useState(false);
 
   // Candidate form state (for adding new candidate)
-  const emptyC = { name: '', party: '', votes: 0, changeVotes: 0, color: '#3b82f6', imageUrl: '', partySymbol: '' };
+  const emptyC = { name: '', party: '', votes: 0, changeVotes: 0, color: '#3b82f6', imageUrl: '', partySymbol: '', isElected: false };
   const [newCandidateForm, setNewCandidateForm] = useState(emptyC);
   const [showNewCandidateForm, setShowNewCandidateForm] = useState(false);
 
@@ -696,6 +698,10 @@ function WidgetTab() {
                     <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Photo</label>
                     <ImageInput value={newCandidateForm.imageUrl} onChange={v => setNewCandidateForm(p => ({ ...p, imageUrl: v }))} />
                   </div>
+                  <div className="col-span-2 flex items-center gap-2 mt-2">
+                    <input type="checkbox" checked={newCandidateForm.isElected || false} onChange={e => setNewCandidateForm(p => ({ ...p, isElected: e.target.checked }))} className="w-4 h-4 accent-purple-500" />
+                    <label className="text-sm font-bold text-slate-300 mukta-bold cursor-pointer">Mark as Elected (Winner)</label>
+                  </div>
                 </div>
                 <button onClick={() => addCandidateToRegion(selected._id)}
                   className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 mukta-bold">
@@ -763,6 +769,10 @@ function WidgetTab() {
                     <div className="col-span-2">
                       <label className="text-[10px] font-bold text-slate-500 block mb-1 mukta-bold uppercase">Candidate Photo</label>
                       <ImageInput value={c.imageUrl || ''} onChange={v => handleCandidateChange(selected._id, c._id, 'imageUrl', v)} />
+                    </div>
+                    <div className="col-span-2 flex items-center gap-2 mt-1">
+                      <input type="checkbox" id={`right-elected-${c._id}`} checked={c.isElected || false} onChange={e => handleCandidateChange(selected._id, c._id, 'isElected', e.target.checked)} className="w-4 h-4 accent-purple-500" />
+                      <label htmlFor={`right-elected-${c._id}`} className="text-xs font-bold text-amber-400 mukta-bold cursor-pointer">🏆 Mark as Elected (Winner)</label>
                     </div>
                   </div>
                 </div>

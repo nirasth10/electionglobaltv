@@ -12,6 +12,7 @@ export interface ICandidate {
   color: string;
   imageUrl: string;
   partySymbol?: string;
+  isElected?: boolean;
 }
 
 export interface IElectionRegion {

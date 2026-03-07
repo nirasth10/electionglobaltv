@@ -33,10 +33,10 @@ export default function ElectionWidget() {
 
                 {/* Candidate list */}
                 <div className="p-2 sm:p-2.5 space-y-1.5 overflow-y-auto overflow-x-hidden">
-                    {currentRegion.candidates.map((candidate) => (
+                    {[...currentRegion.candidates].sort((a, b) => b.votes - a.votes).map((candidate) => (
                         <div
                             key={candidate._id}
-                            className="flex items-center p-2 sm:p-3 rounded-xl hover:bg-white/[0.05] transition-colors group gap-3"
+                            className={`flex items-center p-2 sm:p-3 rounded-xl transition-colors group gap-3 ${candidate.isElected ? 'bg-amber-500/20 border border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.15)]' : 'hover:bg-white/[0.05]'}`}
                         >
                             {/* Avatar */}
                             <div className="relative flex-shrink-0">
@@ -44,24 +44,33 @@ export default function ElectionWidget() {
                                     <img
                                         src={candidate.imageUrl}
                                         alt={candidate.name}
-                                        className="w-[56px] h-[56px] rounded-full object-cover border-2 border-white/10 group-hover:border-white/25 transition-all"
+                                        className={`w-[56px] h-[56px] rounded-full object-cover border-2 transition-all ${candidate.isElected ? 'border-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.3)]' : 'border-white/10 group-hover:border-white/25'}`}
                                     />
                                 ) : (
                                     <div
-                                        className="w-[56px] h-[56px] rounded-full border-2 border-white/10 flex items-center justify-center text-xl font-bold"
+                                        className={`w-[56px] h-[56px] rounded-full border-2 flex items-center justify-center text-xl font-bold ${candidate.isElected ? 'border-amber-400 text-amber-400 bg-amber-500/10' : 'border-white/10'}`}
                                     >
                                         {candidate.name.charAt(0)}
                                     </div>
                                 )}
                                 {/* Party Flag Badge */}
                                 <div
-                                    className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-[#063522] flex items-center justify-center overflow-hidden"
+                                    className={`absolute -bottom-1 ${candidate.isElected ? '-left-1' : '-right-1'} w-6 h-6 rounded-full border-2 border-[#063522] flex items-center justify-center overflow-hidden transition-all duration-300`}
                                     style={{ backgroundColor: candidate.color }}
                                 >
                                     {candidate.partySymbol && candidate.partySymbol.startsWith('http') && (
                                         <img src={candidate.partySymbol} alt={candidate.party} className="w-full h-full object-cover" />
                                     )}
                                 </div>
+                                {/* Elected winner design overlapping the logo as requested */}
+                                {candidate.isElected && (
+                                    <div
+                                        className="absolute -bottom-1 -right-1 w-[28px] h-[28px] bg-[#3b82f6] flex items-center justify-center shadow-[0_2px_10px_rgba(0,0,0,0.5)] z-10"
+                                        style={{ clipPath: 'polygon(50% 0%, 61% 11%, 77% 8%, 82% 23%, 97% 28%, 93% 43%, 100% 56%, 89% 68%, 89% 84%, 74% 88%, 64% 100%, 48% 95%, 34% 100%, 25% 87%, 9% 82%, 10% 66%, 0% 52%, 9% 39%, 4% 23%, 19% 19%, 24% 4%, 40% 9%)' }}
+                                    >
+                                        <svg className="w-[14px] h-[14px] text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={4} strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Name */}

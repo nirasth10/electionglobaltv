@@ -9,6 +9,7 @@ export interface ILeftCandidate {
     color: string;
     imageUrl: string;
     partySymbol?: string;
+    isElected?: boolean;
 }
 
 export interface ILeftElectionRegion extends Document {
@@ -30,6 +31,7 @@ const LeftCandidateSchema = new Schema<ILeftCandidate>({
     color: { type: String, default: '#3b82f6' },
     imageUrl: { type: String, default: '' },
     partySymbol: { type: String, default: '' },
+    isElected: { type: Boolean, default: false },
 });
 
 const LeftElectionRegionSchema = new Schema<ILeftElectionRegion>(
