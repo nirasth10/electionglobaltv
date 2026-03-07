@@ -26,7 +26,7 @@ const NewsMarquee = () => {
     return (
         <div className="fixed left-0 w-full z-40 bg-[#e4e4e4] shadow-md flex overflow-hidden font-sans antialiased border-y-[2px] border-[#0a1120]/50" style={{ bottom: '166px', height: '80px' }}>
             {/* Heading Section */}
-            <div className="bg-white flex flex-col justify-center px-3 sm:px-6 flex-shrink-0 z-20 relative shadow-[4px_0_10px_rgba(0,0,0,0.15)] h-full min-w-[110px] sm:min-w-[170px] border-r border-[#0a1120]/20">
+            <div className="bg-white flex flex-col justify-center px-3 sm:px-6 flex-shrink-0 z-20 relative shadow-[4px_0_10px_rgba(0,0,0,0.15)] h-full min-w-[110px] sm:min-w-[170px] border-r border-[#0a1120]/20" style={{ paddingLeft: '50px' }}>
                 <h1 className="font-black leading-[1.1] text-[#b91c1c] uppercase tracking-wide mukta-extrabold text-left" style={{ fontSize: '30px' }}>
                     {headingWords.map((word, i) => (
                         <span key={i} className="block">{word}</span>
@@ -37,7 +37,7 @@ const NewsMarquee = () => {
             {/* Flipper Section */}
             <div className="flex-1 flex items-center overflow-hidden relative bg-[#e4e4e4] px-6">
                 <div key={currentItem._id} className="flex w-full animate-flip-up items-center min-w-0">
-                    <span className="block w-full text-[#0a1120] font-bold pt-4 pb-1 translate-y-[6px] whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontSize: '50px', fontFamily: 'Preeti, sans-serif', lineHeight: '1.5' }}>
+                    <span className="block w-full text-[#0a1120] font-bold pt-1 pb-2 translate-y-0 whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontSize: '50px', fontFamily: 'Preeti, sans-serif', lineHeight: '1.5' }}>
                         {currentItem.text}
                     </span>
                 </div>

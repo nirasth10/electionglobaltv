@@ -29,7 +29,7 @@ const BreakingNews = () => {
     return (
         <div className="fixed bottom-0 left-0 w-full z-50 bg-white border-y-[2px] sm:border-y-[3px] border-[#131313] shadow-lg flex overflow-hidden font-sans antialiased" style={{ height: '70px' }}>
             {/* Logo Section */}
-            <div className="bg-[#051A3B] flex items-center justify-center flex-shrink-0 z-20 relative h-full" style={{ paddingLeft: '25px' }}>
+            <div className="bg-[#051A3B] flex items-center justify-center flex-shrink-0 z-20 relative h-full" style={{ paddingLeft: '35px' }}>
                 <img src="/favicon.jpg" alt="Global TV" className="w-auto object-contain px-2 sm:px-3 bg-[#051A3B]" style={{ height: '43px' }} />
             </div>
 
