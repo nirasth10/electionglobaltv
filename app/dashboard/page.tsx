@@ -1252,8 +1252,11 @@ function MarqueeTab() {
           </div>
           <div className="space-y-3">
             <div>
-              <label className="text-xs font-bold text-slate-400 block mb-1.5 mukta-bold">Text</label>
-              <textarea value={text} onChange={e => setText(e.target.value)} rows={3}
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="text-xs font-bold text-slate-400 mukta-bold">Text (Max 120 chars)</label>
+                <span className={`text-[10px] font-bold ${text.length >= 120 ? 'text-red-400' : 'text-slate-500'}`}>{text.length}/120</span>
+              </div>
+              <textarea value={text} onChange={e => setText(e.target.value)} rows={3} maxLength={120}
                 placeholder="Type marquee news here..."
                 className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-orange-500 transition resize-none" />
             </div>

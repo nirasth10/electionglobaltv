@@ -36,8 +36,8 @@ const NewsMarquee = () => {
 
             {/* Flipper Section */}
             <div className="flex-1 flex items-center overflow-hidden relative bg-[#e4e4e4] px-6">
-                <div key={currentItem._id} className="flex w-full animate-flip-up items-center">
-                    <span className="flex items-center text-[#0a1120] font-bold mukta-bold leading-none translate-y-[2px]" style={{ fontSize: '50px' }}>
+                <div key={currentItem._id} className="flex w-full animate-flip-up items-center min-w-0">
+                    <span className="block w-full text-[#0a1120] font-bold pt-4 pb-1 translate-y-[6px] whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontSize: '50px', fontFamily: 'Preeti, sans-serif', lineHeight: '1.5' }}>
                         {currentItem.text}
                     </span>
                 </div>

@@ -40,7 +40,7 @@ const ElectionTicker = () => {
             activeItems.map((item) => (
               <div
                 key={item._id}
-                className="flex items-center min-w-[280px] bg-white/[0.03] border border-white/5 rounded-xl px-4 hover:bg-white/[0.07] transition-all group gap-3 flex-shrink-0" style={{ height: '80px' }}
+                className="flex items-center min-w-[280px] bg-white/[0.03] border border-white/5 rounded-xl px-4 hover:bg-white/[0.07] transition-all group gap-3 flex-shrink-0" style={{ height: '90px' }}
               >
                 {/* 
                 <div
@@ -59,11 +59,11 @@ const ElectionTicker = () => {
                   <h3 className="font-black text-white mukta-extrabold leading-none group-hover:text-blue-300 transition-colors" style={{ fontSize: '30px' }}>
                     {item.party}
                   </h3>
-                  <div className="flex items-center gap-1.5 font-bold mukta-bold mt-2" style={{ fontSize: '20px' }}>
+                  <div className="flex items-center gap-1.5 font-bold mukta-bold mt-2" style={{ fontSize: '25px' }}>
                     <span className="text-slate-400">अग्रता</span>
                     <span className="text-emerald-400">▲ {item.changeVotes}</span>
-                    <span className="text-slate-600 mx-1">|</span>
-                    <span className="text-white tabular-nums tracking-tighter">{formatNepaliVotes(item.votes)}</span>
+                    {/* <span className="text-slate-600 mx-1">|</span> */}
+                    {/* <span className="text-white tabular-nums tracking-tighter">{formatNepaliVotes(item.votes)}</span> */}
                   </div>
                 </div>
               </div>
