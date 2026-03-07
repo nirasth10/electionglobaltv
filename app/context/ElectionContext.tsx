@@ -45,7 +45,7 @@ export const ElectionProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [regions, setRegions] = useState<IElectionRegion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { socket } = useSocket();
+  const { socket, socketUnavailable } = useSocket();
 
   const currentRegion = regions.find((r) => r.isCurrentDisplay) ?? regions[0] ?? null;
 
@@ -112,6 +112,18 @@ export const ElectionProvider: React.FC<{ children: ReactNode }> = ({ children }
     socket.on('regions:updated', handler);
     return () => { socket.off('regions:updated', handler); };
   }, [socket]);
+
+  // Always poll every 5 seconds — guarantees live updates regardless of socket.
+  // Socket push is instant when available; polling fills the gap otherwise.
+  useEffect(() => {
+    const id = setInterval(() => {
+      fetch('/api/regions')
+        .then(r => r.json())
+        .then(data => { if (Array.isArray(data)) setRegions(data); })
+        .catch(() => { /* silent */ });
+    }, 5000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <ElectionContext.Provider value={{

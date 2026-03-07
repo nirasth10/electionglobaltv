@@ -45,7 +45,7 @@ export const LeftElectionProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [leftRegions, setLeftRegions] = useState<ILeftElectionRegion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { socket } = useSocket();
+  const { socket, socketUnavailable } = useSocket();
 
   const currentLeftRegion = leftRegions.find((r) => r.isCurrentDisplay) ?? leftRegions[0] ?? null;
 
@@ -112,6 +112,18 @@ export const LeftElectionProvider: React.FC<{ children: ReactNode }> = ({ childr
     socket.on('left-regions:updated', handler);
     return () => { socket.off('left-regions:updated', handler); };
   }, [socket]);
+
+  // Always poll every 5 seconds — guarantees live updates regardless of socket.
+  // Socket push is instant when available; polling fills the gap otherwise.
+  useEffect(() => {
+    const id = setInterval(() => {
+      fetch('/api/left-regions')
+        .then(r => r.json())
+        .then(data => { if (Array.isArray(data)) setLeftRegions(data); })
+        .catch(() => { /* silent */ });
+    }, 5000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <LeftElectionContext.Provider value={{
